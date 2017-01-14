@@ -3,13 +3,22 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     tools:context="com.udacity.stockhawk.ui.MainActivity">
 
     <LinearLayout
         android:id="@+id/container_stocks_list"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="match_parent"
+        android:layout_weight="7"
+        android:orientation="vertical">
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/container_stock_detail"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="13"
         android:orientation="vertical">
     </LinearLayout>
 </LinearLayout>
