@@ -32,4 +32,8 @@
     <string name="toast_stock_added_no_connectivity">Symbol %s added. Will refresh when network available.</string>
     <string name="toast_no_connectivity">Will refresh when network available.</string>
 
+    <string name="stock_symbol_constraint" translatable="false">Stock symbol must consist of one or more alphabetic characters.</string>
+    <string name="internet_connectivity_unavailable" translatable="false">Internet connectivity unavailable. Please try again in some time.</string>
+
+    <string name="toast_action_ok" translatable="false">OK</string>
 </resources>

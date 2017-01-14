@@ -5,6 +5,7 @@ import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -115,18 +116,21 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
     void addStock(String symbol) {
-        if (symbol != null && !symbol.isEmpty()) {
-
-            if (networkUp()) {
-                swipeRefreshLayout.setRefreshing(true);
-            } else {
-                String message = getString(R.string.toast_stock_added_no_connectivity, symbol);
-                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
-            }
-
-            PrefUtils.addStock(this, symbol);
-            QuoteSyncJob.syncImmediately(this);
+        if (symbol == null
+                || symbol.isEmpty()
+                || !symbol.matches("^[A-Z]+$")) {
+            showSnackbar(getString(R.string.stock_symbol_constraint));
+            return;
         }
+
+        if (!networkUp()) {
+            showSnackbar(getString(R.string.internet_connectivity_unavailable));
+            return;
+        }
+
+        swipeRefreshLayout.setRefreshing(true);
+        PrefUtils.addStock(this, symbol);
+        QuoteSyncJob.syncImmediately(this);
     }
 
     @Override
@@ -183,5 +187,16 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
             return true;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void showSnackbar(String message) {
+        Snackbar.make(
+                stockRecyclerView.getRootView(),
+                message,
+                Snackbar.LENGTH_LONG
+        ).setAction(getString(R.string.toast_action_ok), new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {}
+        }).show();
     }
 }
