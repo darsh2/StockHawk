@@ -1,4 +1,4 @@
-package com.udacity.stockhawk.ui;
+package com.udacity.stockhawk.ui.adapter;
 
 
 import android.content.Context;
@@ -20,7 +20,7 @@ import java.util.Locale;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
+public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
 
     private final Context context;
     private final DecimalFormat dollarFormatWithPlus;
@@ -29,7 +29,7 @@ class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
     private Cursor cursor;
     private StockAdapterOnClickHandler clickHandler;
 
-    StockAdapter(Context context, StockAdapterOnClickHandler clickHandler) {
+    public StockAdapter(Context context, StockAdapterOnClickHandler clickHandler) {
         this.context = context;
         this.clickHandler = clickHandler;
 
@@ -42,12 +42,12 @@ class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
         percentageFormat.setPositivePrefix("+");
     }
 
-    void setCursor(Cursor cursor) {
+    public void setCursor(Cursor cursor) {
         this.cursor = cursor;
         notifyDataSetChanged();
     }
 
-    String getSymbolAtPosition(int position) {
+    public String getSymbolAtPosition(int position) {
 
         cursor.moveToPosition(position);
         return cursor.getString(Contract.Quote.POSITION_SYMBOL);
@@ -103,7 +103,7 @@ class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
     }
 
 
-    interface StockAdapterOnClickHandler {
+    public interface StockAdapterOnClickHandler {
         void onClick(String symbol);
     }
 
