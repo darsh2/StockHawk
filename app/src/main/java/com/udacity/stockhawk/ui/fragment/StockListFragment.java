@@ -6,7 +6,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -29,8 +28,14 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 import com.udacity.stockhawk.sync.QuoteSyncJob;
+import com.udacity.stockhawk.sync.event.ErrorEvent;
+import com.udacity.stockhawk.sync.receiver.StockSymbolNotFoundReceiver;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -60,8 +65,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     @BindView(R.id.error)
     TextView error;
 
-    @BindView(R.id.fab)
-    FloatingActionButton addStockButton;
+    private StockSymbolNotFoundReceiver stockSymbolNotFoundReceiver;
 
     @Override
     public void onClick(String symbol) {
@@ -159,6 +163,31 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Override
+    public void onStart() {
+        super.onStart();
+        EventBus.getDefault().register(this);
+
+        /*
+        stockSymbolNotFoundReceiver = new StockSymbolNotFoundReceiver(this);
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(Constants.ACTION_STOCK_SYMBOL_NOT_FOUND);
+        LocalBroadcastManager.getInstance(getContext())
+                .registerReceiver(stockSymbolNotFoundReceiver, intentFilter);
+         */
+    }
+
+    @Override
+    public void onStop() {
+        EventBus.getDefault().unregister(this);
+        super.onStop();
+
+        /*
+        LocalBroadcastManager.getInstance(getContext())
+                .unregisterReceiver(stockSymbolNotFoundReceiver);
+         */
+    }
+
+    @Override
     public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
         inflater.inflate(R.menu.main_activity_settings, menu);
         MenuItem item = menu.findItem(R.id.action_change_units);
@@ -184,6 +213,16 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
             item.setIcon(R.drawable.ic_percentage);
         } else {
             item.setIcon(R.drawable.ic_dollar);
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    private void onErrorEvent(ErrorEvent event) {
+        Timber.d("onErrorEvent");
+        if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
+            showSnackbar(getString(R.string.error_network));
+        } else if (event.getCode() == ErrorEvent.SYMBOL_NOT_FOUND_ERROR) {
+            showSnackbar(getString(R.string.error_stock_symbol_not_found));
         }
     }
 
@@ -221,5 +260,13 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
             public void onClick(View v) {}
         }).show();
     }
+
+    /*
+    @Override
+    public void onStockSymbolNotFound() {
+        showSnackbar("Stock symbol not found. Please enter a valid symbol.");
+        swipeRefreshLayout.setRefreshing(false);
+    }
+    */
 }
 

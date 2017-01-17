@@ -11,6 +11,9 @@ import android.net.NetworkInfo;
 
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
+import com.udacity.stockhawk.sync.event.ErrorEvent;
+
+import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -113,8 +116,18 @@ public final class QuoteSyncJob {
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
-        } catch (IOException exception) {
-            Timber.e(exception, "Error fetching stock quotes");
+        } catch (IOException ioException) {
+            Timber.e(ioException, "Error fetching stock quotes");
+            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR));
+
+        } catch (NullPointerException nullPointerException) {
+            Timber.e(nullPointerException, "Stock symbol not found");
+            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.SYMBOL_NOT_FOUND_ERROR));
+
+            /*
+            LocalBroadcastManager localBroadcastManager = LocalBroadcastManager.getInstance(context);
+            localBroadcastManager.sendBroadcast(new Intent(Constants.ACTION_STOCK_SYMBOL_NOT_FOUND));
+            */
         }
     }
 
