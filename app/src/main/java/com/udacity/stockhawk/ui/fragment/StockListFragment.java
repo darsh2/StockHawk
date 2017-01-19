@@ -1,5 +1,6 @@
 package com.udacity.stockhawk.ui.fragment;
 
+import android.app.Activity;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
@@ -30,6 +31,7 @@ import com.udacity.stockhawk.data.PrefUtils;
 import com.udacity.stockhawk.sync.QuoteSyncJob;
 import com.udacity.stockhawk.sync.event.ErrorEvent;
 import com.udacity.stockhawk.sync.receiver.StockSymbolNotFoundReceiver;
+import com.udacity.stockhawk.ui.activity.MainActivity;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
 
@@ -50,7 +52,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
         SwipeRefreshLayout.OnRefreshListener,
         StockAdapter.StockAdapterOnClickHandler {
 
-    public static final String TAG = "StockListFragment";
+    public static final String TAG = StockListFragment.class.getName();
 
     private static final int STOCK_LOADER = 0;
 
@@ -66,11 +68,6 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     TextView error;
 
     private StockSymbolNotFoundReceiver stockSymbolNotFoundReceiver;
-
-    @Override
-    public void onClick(String symbol) {
-        Timber.d("Symbol clicked: %s", symbol);
-    }
 
     @Nullable
     @Override
@@ -217,7 +214,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    private void onErrorEvent(ErrorEvent event) {
+    public void onErrorEvent(ErrorEvent event) {
         Timber.d("onErrorEvent");
         if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
             showSnackbar(getString(R.string.error_network));
@@ -268,5 +265,18 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
         swipeRefreshLayout.setRefreshing(false);
     }
     */
+
+    public interface OnStockClickListener {
+        void onStockClick(String symbol, String name);
+    }
+
+    @Override
+    public void onStockClick(String symbol, String name) {
+        Timber.d("Symbol clicked: %s %s", symbol, name);
+        Activity activity = getActivity();
+        if (activity instanceof MainActivity) {
+            ((MainActivity) activity).onStockClick(symbol, name);
+        }
+    }
 }
 
