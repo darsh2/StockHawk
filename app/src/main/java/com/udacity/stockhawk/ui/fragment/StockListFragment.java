@@ -266,10 +266,6 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     }
     */
 
-    public interface OnStockClickListener {
-        void onStockClick(String symbol, String name);
-    }
-
     @Override
     public void onStockClick(String symbol, String name) {
         Timber.d("Symbol clicked: %s %s", symbol, name);

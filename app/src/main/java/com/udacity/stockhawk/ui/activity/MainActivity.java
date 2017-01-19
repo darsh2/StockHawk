@@ -9,8 +9,7 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import com.udacity.stockhawk.util.Constants;
 
-public class MainActivity extends AppCompatActivity implements
-        StockListFragment.OnStockClickListener {
+public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -32,7 +31,6 @@ public class MainActivity extends AppCompatActivity implements
         }
     }
 
-    @Override
     public void onStockClick(String symbol, String name) {
         Intent intent = new Intent(this, StockDetailActivity.class);
         intent.putExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL, symbol);
