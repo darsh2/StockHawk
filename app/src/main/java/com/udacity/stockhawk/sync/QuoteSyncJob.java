@@ -74,20 +74,13 @@ public final class QuoteSyncJob {
             while (iterator.hasNext()) {
                 String symbol = iterator.next();
 
-
                 Stock stock = quotes.get(symbol);
                 StockQuote quote = stock.getQuote();
-
-                float price = quote.getPrice().floatValue();
-                float change = quote.getChange().floatValue();
-                float percentChange = quote.getChangeInPercent().floatValue();
 
                 // WARNING! Don't request historical data for a stock that doesn't exist!
                 // The request will hang forever X_x
                 List<HistoricalQuote> history = stock.getHistory(from, to, Interval.WEEKLY);
-
                 StringBuilder historyBuilder = new StringBuilder();
-
                 for (HistoricalQuote it : history) {
                     historyBuilder.append(it.getDate().getTimeInMillis());
                     historyBuilder.append(", ");
@@ -97,15 +90,12 @@ public final class QuoteSyncJob {
 
                 ContentValues quoteCV = new ContentValues();
                 quoteCV.put(Contract.Quote.COLUMN_SYMBOL, symbol);
-                quoteCV.put(Contract.Quote.COLUMN_PRICE, price);
-                quoteCV.put(Contract.Quote.COLUMN_PERCENTAGE_CHANGE, percentChange);
-                quoteCV.put(Contract.Quote.COLUMN_ABSOLUTE_CHANGE, change);
-
-
+                quoteCV.put(Contract.Quote.COLUMN_NAME, stock.getName());
+                quoteCV.put(Contract.Quote.COLUMN_PRICE, quote.getPrice().floatValue());
+                quoteCV.put(Contract.Quote.COLUMN_ABSOLUTE_CHANGE, quote.getChange().floatValue());
+                quoteCV.put(Contract.Quote.COLUMN_PERCENTAGE_CHANGE, quote.getChangeInPercent().floatValue());
                 quoteCV.put(Contract.Quote.COLUMN_HISTORY, historyBuilder.toString());
-
                 quoteCVs.add(quoteCV);
-
             }
 
             context.getContentResolver()
