@@ -13,15 +13,17 @@
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="?attr/colorPrimary"
+            app:navigationIcon="?attr/homeAsUpIndicator"
+            app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
             app:popupTheme="@style/ThemeOverlay.AppCompat.Light"
             app:layout_scrollFlags="scroll|enterAlways|snap"/>
 
-        <LinearLayout
-            android:id="@+id/layout_stock_name"
+        <TextView
+            android:id="@+id/text_view_stock_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"/>
+            android:textSize="20sp"
+            android:textColor="@android:color/white"/>
     </android.support.design.widget.AppBarLayout>
 
     <LinearLayout

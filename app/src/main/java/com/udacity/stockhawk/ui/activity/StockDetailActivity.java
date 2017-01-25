@@ -8,6 +8,8 @@ import android.support.v7.app.AppCompatActivity;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockDetailFragment;
 
+import timber.log.Timber;
+
 /**
  * Created by darshan on 17/1/17.
  */
@@ -17,6 +19,7 @@ public class StockDetailActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stock_detail);
+        Timber.d("onCreate");
 
         Intent intent = getIntent();
         if (intent == null) {
@@ -33,8 +36,19 @@ public class StockDetailActivity extends AppCompatActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .add(R.id.fragment_container, stockDetailFragment, StockDetailFragment.TAG)
-                    .addToBackStack(null)
                     .commit();
         }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Timber.d("onStart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Timber.d("onStop");
     }
 }

@@ -9,11 +9,15 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import com.udacity.stockhawk.util.Constants;
 
+import timber.log.Timber;
+
 public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Timber.d("onCreate");
 
         StockListFragment stockListFragment = null;
         if (getSupportFragmentManager() != null) {
@@ -26,7 +30,6 @@ public class MainActivity extends AppCompatActivity {
             getSupportFragmentManager()
                     .beginTransaction()
                     .add(R.id.container_stocks_list, stockListFragment, StockListFragment.TAG)
-                    .addToBackStack(null)
                     .commit();
         }
     }
@@ -36,5 +39,17 @@ public class MainActivity extends AppCompatActivity {
         intent.putExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL, symbol);
         intent.putExtra(Constants.INTENT_EXTRA_STOCK_NAME, name);
         startActivity(intent);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        Timber.d("onStart");
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        Timber.d("onStop");
     }
 }

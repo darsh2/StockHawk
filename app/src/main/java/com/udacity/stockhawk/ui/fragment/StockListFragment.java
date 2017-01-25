@@ -72,6 +72,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        Timber.d("onCreateView");
         View view = inflater.inflate(R.layout.fragment_stocks_list, container, true);
         ButterKnife.bind(this, view);
 
@@ -163,7 +164,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
     public void onStart() {
         super.onStart();
         EventBus.getDefault().register(this);
-
+        Timber.d("onStart");
         /*
         stockSymbolNotFoundReceiver = new StockSymbolNotFoundReceiver(this);
         IntentFilter intentFilter = new IntentFilter();
@@ -178,6 +179,7 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
         EventBus.getDefault().unregister(this);
         super.onStop();
 
+        Timber.d("onStop");
         /*
         LocalBroadcastManager.getInstance(getContext())
                 .unregisterReceiver(stockSymbolNotFoundReceiver);
@@ -273,6 +275,12 @@ public class StockListFragment extends Fragment implements LoaderManager.LoaderC
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).onStockClick(symbol, name);
         }
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Timber.d("onDestroyView");
     }
 }
 
