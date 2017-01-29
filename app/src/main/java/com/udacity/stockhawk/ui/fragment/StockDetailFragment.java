@@ -2,6 +2,7 @@ package com.udacity.stockhawk.ui.fragment;
 
 import android.content.Intent;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -11,13 +12,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.XAxis;
+import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.util.Constants;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.concurrent.Callable;
 
 import butterknife.BindView;
@@ -43,6 +50,11 @@ public class StockDetailFragment extends Fragment {
 
     @BindView(R.id.text_view_stock_name)
     TextView textViewStockName;
+
+    @BindView(R.id.line_chart)
+    LineChart lineChart;
+
+    private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -77,22 +89,61 @@ public class StockDetailFragment extends Fragment {
         textViewStockName.setPadding(toolbar.getTitleMarginStart(), 0, 0, 0);
         textViewStockName.setText(stockName);
 
-        loadHistoricalStockQuotes();
+        initChartView();
 
         return view;
     }
 
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        disposableSingleObserver.dispose();
-        if (disposableSingleObserver.isDisposed()) {
-            Timber.d("isDisposed");
-        }
-        Timber.d("onDestroyView");
+    private void initChartView() {
+        Timber.d("initChartView");
+        lineChart.setBackgroundColor(Color.WHITE);
+
+        lineChart.getDescription().setEnabled(false);
+
+        lineChart.setTouchEnabled(true);
+        lineChart.setDragEnabled(true);
+        lineChart.setScaleEnabled(true);
+        lineChart.setPinchZoom(true);
+
+        lineChart.setDrawGridBackground(true);
+        lineChart.setMaxHighlightDistance(300);
+
+        XAxis x = lineChart.getXAxis();
+        x.setEnabled(false);
+
+        YAxis y = lineChart.getAxisLeft();
+        y.setLabelCount(6, false);
+        y.setDrawGridLines(true);
+        y.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        y.setAxisLineColor(Color.BLACK);
+        y.setTextColor(Color.BLACK);
+
+        lineChart.getAxisRight().setEnabled(false);
+        lineChart.getLegend().setEnabled(false);
+
+        loadHistoricalStockQuotes();
     }
 
-    private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
+    private void drawGraph(ArrayList<Entry> arrayList) {
+        LineDataSet lineDataSet = new LineDataSet(arrayList, "Historical Stock Quotes");
+
+        lineDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        lineDataSet.setCubicIntensity(0.2f);
+        lineDataSet.setDrawCircles(false);
+        lineDataSet.setLineWidth(1.8f);
+        lineDataSet.setColor(Color.BLUE);
+        lineDataSet.setFillColor(Color.BLACK);
+        lineDataSet.setFillAlpha(255);
+        lineDataSet.setDrawHighlightIndicators(true);
+        lineDataSet.setHighLightColor(Color.rgb(244, 117, 117));
+
+        LineData data = new LineData(lineDataSet);
+        data.setValueTextSize(9f);
+        data.setDrawValues(false);
+
+        lineChart.setData(data);
+        lineChart.invalidate();
+    }
 
     private void loadHistoricalStockQuotes() {
         Single<ArrayList<Entry>> stockQuotesSingle = Single.fromCallable(new Callable<ArrayList<Entry>>() {
@@ -108,7 +159,7 @@ public class StockDetailFragment extends Fragment {
                 .subscribeWith(new DisposableSingleObserver<ArrayList<Entry>>() {
                     @Override
                     public void onSuccess(ArrayList<Entry> value) {
-
+                        drawGraph(value);
                     }
 
                     @Override
@@ -139,11 +190,23 @@ public class StockDetailFragment extends Fragment {
         String[] historicalQuotes = history.split("\n");
         int numHistoricalQuotes = historicalQuotes.length;
         ArrayList<Entry> stockQuotes = new ArrayList<>(numHistoricalQuotes);
-        for (int i = 0, l = historicalQuotes.length; i < l; i++) {
+        for (int i = numHistoricalQuotes - 1, x = 0; i >= 0; i--) {
             String[] entry = historicalQuotes[i].split(", ");
-            stockQuotes.add(new Entry(Float.parseFloat(entry[0]), (new BigDecimal(entry[1])).floatValue()));
-            Timber.d(stockQuotes.get(i).getX() + ", " + stockQuotes.get(i).getY());
+            stockQuotes.add(new Entry(x++, (new BigDecimal(entry[1])).floatValue()));
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTimeInMillis(Long.parseLong(entry[0]));
+            Timber.d(calendar.getTime().toString(), entry[1]);
         }
         return stockQuotes;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Timber.d("onDestroyView");
+        disposableSingleObserver.dispose();
+        if (disposableSingleObserver.isDisposed()) {
+            Timber.d("isDisposed");
+        }
     }
 }
