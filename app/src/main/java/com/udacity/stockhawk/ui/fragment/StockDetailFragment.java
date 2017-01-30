@@ -13,18 +13,23 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
+import com.github.mikephil.charting.components.AxisBase;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
+import com.github.mikephil.charting.formatter.IAxisValueFormatter;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.util.Constants;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 import java.util.concurrent.Callable;
 
 import butterknife.BindView;
@@ -55,6 +60,9 @@ public class StockDetailFragment extends Fragment {
     LineChart lineChart;
 
     private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
+
+    private ArrayList<String> date;
+    private ArrayList<Entry> stockQuotes;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
@@ -96,53 +104,67 @@ public class StockDetailFragment extends Fragment {
 
     private void initChartView() {
         Timber.d("initChartView");
-        lineChart.setBackgroundColor(Color.WHITE);
+        styleLineChart();
+        styleDateAxis();
+        styleStockCloseAxis();
 
-        lineChart.getDescription().setEnabled(false);
+        loadHistoricalStockQuotes();
+    }
+
+    private void styleLineChart() {
+        lineChart.setBackgroundColor(Color.WHITE);
 
         lineChart.setTouchEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setScaleEnabled(true);
         lineChart.setPinchZoom(true);
-
         lineChart.setDrawGridBackground(true);
         lineChart.setMaxHighlightDistance(300);
 
-        XAxis x = lineChart.getXAxis();
-        x.setEnabled(false);
-
-        YAxis y = lineChart.getAxisLeft();
-        y.setLabelCount(6, false);
-        y.setDrawGridLines(true);
-        y.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        y.setAxisLineColor(Color.BLACK);
-        y.setTextColor(Color.BLACK);
-
-        lineChart.getAxisRight().setEnabled(false);
+        lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(false);
-
-        loadHistoricalStockQuotes();
+        lineChart.getAxisRight().setEnabled(false);
     }
 
-    private void drawGraph(ArrayList<Entry> arrayList) {
-        LineDataSet lineDataSet = new LineDataSet(arrayList, "Historical Stock Quotes");
+    private void styleDateAxis() {
+        XAxis dateAxis = lineChart.getXAxis();
+        dateAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        dateAxis.setLabelCount(4, false);
+        dateAxis.setDrawGridLines(true);
+        dateAxis.setAxisLineColor(Color.BLACK);
+        dateAxis.setTextColor(Color.BLACK);
+        dateAxis.setValueFormatter(new DateAxisValueFormatter());
+    }
 
-        lineDataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
-        lineDataSet.setCubicIntensity(0.2f);
-        lineDataSet.setDrawCircles(false);
-        lineDataSet.setLineWidth(1.8f);
-        lineDataSet.setColor(Color.BLUE);
-        lineDataSet.setFillColor(Color.BLACK);
-        lineDataSet.setFillAlpha(255);
-        lineDataSet.setDrawHighlightIndicators(true);
-        lineDataSet.setHighLightColor(Color.rgb(244, 117, 117));
+    private void styleStockCloseAxis() {
+        YAxis stockCloseAxis = lineChart.getAxisLeft();
+        stockCloseAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        stockCloseAxis.setLabelCount(4, false);
+        stockCloseAxis.setDrawGridLines(true);
+        stockCloseAxis.setAxisLineColor(Color.BLACK);
+        stockCloseAxis.setTextColor(Color.BLACK);
+        stockCloseAxis.setValueFormatter(new StockCloseAxisValueFormatter());
+    }
 
-        LineData data = new LineData(lineDataSet);
-        data.setValueTextSize(9f);
-        data.setDrawValues(false);
+    private class DateAxisValueFormatter implements IAxisValueFormatter {
+        @Override
+        public String getFormattedValue(float value, AxisBase axis) {
+            return date.get((int) value);
+        }
+    }
 
-        lineChart.setData(data);
-        lineChart.invalidate();
+    private class StockCloseAxisValueFormatter implements IAxisValueFormatter {
+        private DecimalFormat decimalFormat;
+
+        StockCloseAxisValueFormatter() {
+            decimalFormat = new DecimalFormat("####.##");
+        }
+
+        @Override
+        public String getFormattedValue(float value, AxisBase axis) {
+            Timber.d("Value: " + value);
+            return decimalFormat.format(value) + " $";
+        }
     }
 
     private void loadHistoricalStockQuotes() {
@@ -189,15 +211,39 @@ public class StockDetailFragment extends Fragment {
 
         String[] historicalQuotes = history.split("\n");
         int numHistoricalQuotes = historicalQuotes.length;
-        ArrayList<Entry> stockQuotes = new ArrayList<>(numHistoricalQuotes);
-        for (int i = numHistoricalQuotes - 1, x = 0; i >= 0; i--) {
+
+        date = new ArrayList<>(numHistoricalQuotes);
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM yyyy", Locale.getDefault());
+
+        stockQuotes = new ArrayList<>(numHistoricalQuotes);
+
+        // The stock quotes are in descending order of date.
+        for (int i = numHistoricalQuotes - 1, entryX = 0; i >= 0; i--) {
             String[] entry = historicalQuotes[i].split(", ");
-            stockQuotes.add(new Entry(x++, (new BigDecimal(entry[1])).floatValue()));
-            Calendar calendar = Calendar.getInstance();
-            calendar.setTimeInMillis(Long.parseLong(entry[0]));
-            Timber.d(calendar.getTime().toString(), entry[1]);
+            stockQuotes.add(new Entry(entryX++, (new BigDecimal(entry[1])).floatValue()));
+            date.add(simpleDateFormat.format(new Date(Long.parseLong(entry[0]))));
         }
         return stockQuotes;
+    }
+
+    private void drawGraph(ArrayList<Entry> arrayList) {
+        LineDataSet lineDataSet = new LineDataSet(arrayList, "Historical Stock Quotes");
+
+        lineDataSet.setDrawCircles(false);
+        lineDataSet.setLineWidth(1.8f);
+        lineDataSet.setColor(Color.GREEN);
+        lineDataSet.setDrawFilled(true);
+        lineDataSet.setFillColor(Color.GREEN);
+        lineDataSet.setFillAlpha(100);
+        lineDataSet.setDrawHighlightIndicators(true);
+        lineDataSet.setHighLightColor(Color.rgb(244, 117, 117));
+
+        LineData data = new LineData(lineDataSet);
+        data.setValueTextSize(9f);
+        data.setDrawValues(false);
+
+        lineChart.setData(data);
+        lineChart.invalidate();
     }
 
     @Override
