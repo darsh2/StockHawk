@@ -1,5 +1,6 @@
 package com.udacity.stockhawk.ui.fragment;
 
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
@@ -14,12 +15,16 @@ import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.LineChart;
 import com.github.mikephil.charting.components.AxisBase;
+import com.github.mikephil.charting.components.IMarker;
+import com.github.mikephil.charting.components.MarkerView;
 import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.Entry;
 import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IAxisValueFormatter;
+import com.github.mikephil.charting.highlight.Highlight;
+import com.github.mikephil.charting.utils.MPPointF;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.util.Constants;
@@ -58,6 +63,11 @@ public class StockDetailFragment extends Fragment {
 
     @BindView(R.id.line_chart)
     LineChart lineChart;
+
+    @BindView(R.id.text_view_marker)
+    TextView textViewMarker;
+
+    private IMarker marker;
 
     private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
 
@@ -112,18 +122,25 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void styleLineChart() {
-        lineChart.setBackgroundColor(Color.WHITE);
-
         lineChart.setTouchEnabled(true);
         lineChart.setDragEnabled(true);
         lineChart.setScaleEnabled(true);
         lineChart.setPinchZoom(true);
-        lineChart.setDrawGridBackground(true);
         lineChart.setMaxHighlightDistance(300);
+
+        lineChart.setBackgroundColor(Color.WHITE);
+        /*
+        Required to set lineChart's background color to the specified
+        value. Ref: http://stackoverflow.com/a/32624619/3946664
+         */
+        lineChart.setDrawGridBackground(false);
 
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(false);
         lineChart.getAxisRight().setEnabled(false);
+
+        marker = new CustomMarkerView(getContext(), R.layout.marker_view);
+        lineChart.setMarker(marker);
     }
 
     private void styleDateAxis() {
@@ -163,7 +180,7 @@ public class StockDetailFragment extends Fragment {
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
             Timber.d("Value: " + value);
-            return decimalFormat.format(value) + " $";
+            return decimalFormat.format(value) + "$";
         }
     }
 
@@ -250,9 +267,35 @@ public class StockDetailFragment extends Fragment {
     public void onDestroyView() {
         super.onDestroyView();
         Timber.d("onDestroyView");
+
+        lineChart.setMarker(null);
+        marker = null;
+
         disposableSingleObserver.dispose();
         if (disposableSingleObserver.isDisposed()) {
             Timber.d("isDisposed");
+        }
+    }
+
+    private class CustomMarkerView extends MarkerView {
+        private MPPointF offset;
+
+        public CustomMarkerView(Context context, int layoutResource) {
+            super(context, layoutResource);
+            offset = new MPPointF(0, 0);
+        }
+
+        @Override
+        public void refreshContent(Entry e, Highlight highlight) {
+            int xPosition = (int) e.getX();
+            float stockQuote = e.getY();
+            textViewMarker.setText(date.get(xPosition) + ", $" + stockQuote);
+            super.refreshContent(e, highlight);
+        }
+
+        @Override
+        public MPPointF getOffset() {
+            return offset;
         }
     }
 }
