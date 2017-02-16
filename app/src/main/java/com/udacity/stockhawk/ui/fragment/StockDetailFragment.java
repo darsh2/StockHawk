@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -41,9 +42,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 /**
  * Created by darshan on 17/1/17.
@@ -54,13 +55,26 @@ public class StockDetailFragment extends Fragment {
 
     private String stockSymbol;
     private String stockName;
+    private String stockPrice;
 
     @BindView(R.id.toolbar)
     Toolbar toolbar;
 
-    @BindView(R.id.text_view_stock_name)
-    TextView textViewStockName;
+    /*
+    Stock symbol view
+     */
+    @BindView(R.id.text_view_stock_symbol)
+    TextView textViewStockSymbol;
 
+    @BindView(R.id.text_view_stock_price)
+    TextView textViewStockPrice;
+
+    @BindView(R.id.text_view_day_range)
+    TextView textViewDayRange;
+
+    /*
+    Chart view
+     */
     @BindView(R.id.line_chart)
     LineChart lineChart;
 
@@ -69,15 +83,40 @@ public class StockDetailFragment extends Fragment {
 
     private IMarker marker;
 
+    /*
+    Key Stats view
+     */
+    @BindView(R.id.text_view_open)
+    TextView textViewOpen;
+
+    @BindView(R.id.text_view_prev_close)
+    TextView textViewPreviousClose;
+
+    @BindView(R.id.text_view_volume)
+    TextView textViewVolume;
+
+    @BindView(R.id.text_view_market_cap)
+    TextView textViewMarketCap;
+
+    @BindView(R.id.text_view_year_low)
+    TextView textViewYearLow;
+
+    @BindView(R.id.text_view_year_high)
+    TextView textViewYearHigh;
+
+    private CompositeDisposable disposables;
+
     private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
 
     private ArrayList<String> date;
     private ArrayList<Entry> stockQuotes;
 
+    private ArrayList<String> stockKeyStats;
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Timber.d("onCreate");
+        log("onCreate");
         if (getActivity() == null
                 || getActivity().getIntent() == null) {
             return;
@@ -86,16 +125,17 @@ public class StockDetailFragment extends Fragment {
         Intent intent = getActivity().getIntent();
         stockSymbol = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL);
         stockName = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_NAME);
+        stockPrice = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_PRICE);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        Timber.d("onCreateView");
+        log("onCreateView");
         View view = inflater.inflate(R.layout.fragment_stock_detail, container, false);
         ButterKnife.bind(this, view);
 
-        toolbar.setTitle(stockSymbol);
+        toolbar.setTitle(stockName);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -103,17 +143,18 @@ public class StockDetailFragment extends Fragment {
             }
         });
 
-        Timber.d("Toolbar margin start: " + toolbar.getTitleMarginStart());
-        textViewStockName.setPadding(toolbar.getTitleMarginStart(), 0, 0, 0);
-        textViewStockName.setText(stockName);
+        textViewStockSymbol.setText(stockSymbol);
+        textViewStockPrice.setText(stockPrice);
 
+        disposables = new CompositeDisposable();
+        loadStockKeyStats();
         initChartView();
 
         return view;
     }
 
     private void initChartView() {
-        Timber.d("initChartView");
+        log("initChartView");
         styleLineChart();
         styleDateAxis();
         styleStockCloseAxis();
@@ -133,7 +174,10 @@ public class StockDetailFragment extends Fragment {
         Required to set lineChart's background color to the specified
         value. Ref: http://stackoverflow.com/a/32624619/3946664
          */
+
         lineChart.setDrawGridBackground(false);
+
+        lineChart.setHighlightPerDragEnabled(false);
 
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(false);
@@ -179,7 +223,7 @@ public class StockDetailFragment extends Fragment {
 
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
-            Timber.d("Value: " + value);
+            //log("Value: " + value);
             return decimalFormat.format(value) + "$";
         }
     }
@@ -188,27 +232,31 @@ public class StockDetailFragment extends Fragment {
         Single<ArrayList<Entry>> stockQuotesSingle = Single.fromCallable(new Callable<ArrayList<Entry>>() {
             @Override
             public ArrayList<Entry> call() throws Exception {
-                return retrieveStockQuotesFromDB();
+                log("stockQuotesSingle - call");
+                return retrieveStockQuotesFromDb();
             }
         });
         stockQuotesSingle
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread());
-        disposableSingleObserver = stockQuotesSingle
+        DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver = stockQuotesSingle
                 .subscribeWith(new DisposableSingleObserver<ArrayList<Entry>>() {
                     @Override
                     public void onSuccess(ArrayList<Entry> value) {
+                        log("stockQuotesSingleObserver - onSuccess");
                         drawGraph(value);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-
+                        log("stockQuotesSingleObserver - onError");
                     }
                 });
+        disposables.add(disposableSingleObserver);
     }
 
-    private ArrayList<Entry> retrieveStockQuotesFromDB() {
+    private ArrayList<Entry> retrieveStockQuotesFromDb() {
+        log("retrieveStockQuotesFromDb");
         Cursor cursor = getContext().getContentResolver()
                 .query(
                         Contract.Quote.makeUriForStock(stockSymbol),
@@ -244,6 +292,7 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void drawGraph(ArrayList<Entry> arrayList) {
+        log("drawGraph");
         LineDataSet lineDataSet = new LineDataSet(arrayList, "Historical Stock Quotes");
 
         lineDataSet.setDrawCircles(false);
@@ -263,17 +312,112 @@ public class StockDetailFragment extends Fragment {
         lineChart.invalidate();
     }
 
+    private void loadStockKeyStats() {
+        log("loadStockKeyStats");
+        Single<Boolean> stockKeyStatsSingle = Single.fromCallable(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                log("stockKeyStatsSingle - call");
+                return retrieveStockKeyStatsFromDb();
+            }
+        });
+        stockKeyStatsSingle
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread());
+        DisposableSingleObserver<Boolean> disposableSingleObserver = stockKeyStatsSingle
+                .subscribeWith(new DisposableSingleObserver<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean value) {
+                        log("stockKeyStatsSingleObserver - onSuccess");
+                        updateKeyStatsView();
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        log("stockKeyStatsSingleObserver - onError");
+                        log(e.toString() + "\n\n" + e.getMessage());
+                        e.printStackTrace();
+                    }
+                });
+        disposables.add(disposableSingleObserver);
+    }
+
+    private static final String tag = "CL-SDF";
+    private static final boolean DEBUG = true;
+    private static final void log(String message) {
+        if (DEBUG) {
+            Log.i(tag, message);
+        }
+    }
+
+    private boolean retrieveStockKeyStatsFromDb() {
+        log("retrieveStockKeyStatsFromDb");
+        Cursor cursor = getContext().getContentResolver()
+                .query(
+                        Contract.KeyStats.makeUriForStockKeyStats(stockSymbol),
+                        new String[] {
+                                Contract.KeyStats.COLUMN_DAY_LOW,
+                                Contract.KeyStats.COLUMN_DAY_HIGH,
+                                Contract.KeyStats.COLUMN_OPEN,
+                                Contract.KeyStats.COLUMN_PREV_CLOSE,
+                                Contract.KeyStats.COLUMN_VOLUME,
+                                Contract.KeyStats.COLUMN_MARKET_CAP,
+                                Contract.KeyStats.COLUMN_YEAR_LOW,
+                                Contract.KeyStats.COLUMN_YEAR_HIGH
+                        },
+                        null,
+                        null,
+                        null
+                );
+        if (cursor == null) {
+            throw new NullPointerException();
+        }
+
+        cursor.moveToNext();
+        stockKeyStats = new ArrayList<>(8);
+        for (int i = 0; i < 8; i++) {
+            stockKeyStats.add(String.valueOf(
+                    cursor.getFloat(cursor.getColumnIndex(KEY_STATS_COLUMN_NAMES[i]))
+            ));
+            log(KEY_STATS_COLUMN_NAMES[i] + ": " + stockKeyStats.get(i));
+        }
+        cursor.close();
+
+        log("KeyStats: " + stockKeyStats.toString());
+        return true;
+    }
+
+    private void updateKeyStatsView() {
+        log("updateKeyStatsView");
+        textViewDayRange.setText(String.format(
+                getString(R.string.day_range),
+                stockKeyStats.get(0) + " - " + stockKeyStats.get(1)
+        ));
+        textViewOpen.setText(String.format(
+                getString(R.string.key_stats_open), stockKeyStats.get(2)));
+        textViewPreviousClose.setText(String.format(
+                getString(R.string.key_stats_prev_close), stockKeyStats.get(3)));
+        textViewVolume.setText(String.format(
+                getString(R.string.key_stats_volume), stockKeyStats.get(4)));
+        textViewMarketCap.setText(String.format(
+                getString(R.string.key_stats_market_cap), stockKeyStats.get(5)));
+        textViewYearLow.setText(String.format(
+                getString(R.string.key_stats_year_low), stockKeyStats.get(6)));
+        textViewYearHigh.setText(String.format(
+                getString(R.string.key_stats_year_high), stockKeyStats.get(7)));
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        Timber.d("onDestroyView");
+        log("onDestroyView");
 
         lineChart.setMarker(null);
         marker = null;
 
-        disposableSingleObserver.dispose();
-        if (disposableSingleObserver.isDisposed()) {
-            Timber.d("isDisposed");
+        disposables.dispose();
+        if (disposables.isDisposed()) {
+            log("isDisposed");
         }
     }
 
@@ -298,4 +442,15 @@ public class StockDetailFragment extends Fragment {
             return offset;
         }
     }
+
+    private final String[] KEY_STATS_COLUMN_NAMES = {
+            Contract.KeyStats.COLUMN_DAY_LOW,
+            Contract.KeyStats.COLUMN_DAY_HIGH,
+            Contract.KeyStats.COLUMN_OPEN,
+            Contract.KeyStats.COLUMN_PREV_CLOSE,
+            Contract.KeyStats.COLUMN_VOLUME,
+            Contract.KeyStats.COLUMN_MARKET_CAP,
+            Contract.KeyStats.COLUMN_YEAR_LOW,
+            Contract.KeyStats.COLUMN_YEAR_HIGH
+    };
 }

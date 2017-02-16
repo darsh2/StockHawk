@@ -8,14 +8,17 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
+import android.util.Log;
 
 public class StockProvider extends ContentProvider {
 
     static final int QUOTE = 100;
     static final int QUOTE_FOR_SYMBOL = 101;
 
-    static UriMatcher uriMatcher = buildUriMatcher();
+    static final int KEY_STATS = 102;
+    static final int KEY_STATS_FOR_SYMBOL = 103;
+
+    public static UriMatcher uriMatcher = buildUriMatcher();
 
     private DbHelper dbHelper;
 
@@ -23,9 +26,19 @@ public class StockProvider extends ContentProvider {
         UriMatcher matcher = new UriMatcher(UriMatcher.NO_MATCH);
         matcher.addURI(Contract.AUTHORITY, Contract.PATH_QUOTE, QUOTE);
         matcher.addURI(Contract.AUTHORITY, Contract.PATH_QUOTE_WITH_SYMBOL, QUOTE_FOR_SYMBOL);
+
+        matcher.addURI(Contract.AUTHORITY, Contract.PATH_KEY_STATS, KEY_STATS);
+        matcher.addURI(Contract.AUTHORITY, Contract.PATH_KEY_STATS_WITH_SYMBOL, KEY_STATS_FOR_SYMBOL);
         return matcher;
     }
 
+    private static final String tag = "CL-SP";
+    private static final boolean DEBUG = true;
+    private static final void log(String message) {
+        if (DEBUG) {
+            Log.i(tag, message);
+        }
+    }
 
     @Override
     public boolean onCreate() {
@@ -36,11 +49,13 @@ public class StockProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
+        log("query :: uri " + uri.toString());
         Cursor returnCursor;
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         switch (uriMatcher.match(uri)) {
-            case QUOTE:
+            case QUOTE: {
+                log("QUOTE");
                 returnCursor = db.query(
                         Contract.Quote.TABLE_NAME,
                         projection,
@@ -51,29 +66,56 @@ public class StockProvider extends ContentProvider {
                         sortOrder
                 );
                 break;
+            }
 
-            case QUOTE_FOR_SYMBOL:
+            case QUOTE_FOR_SYMBOL: {
+                log("QUOTE_FOR_SYMBOL");
                 returnCursor = db.query(
                         Contract.Quote.TABLE_NAME,
                         projection,
                         Contract.Quote.COLUMN_SYMBOL + " = ?",
-                        new String[]{Contract.Quote.getStockFromUri(uri)},
+                        new String[]{ Contract.Quote.getStockFromUri(uri) },
                         null,
                         null,
                         sortOrder
                 );
-
                 break;
-            default:
+            }
+
+            case KEY_STATS: {
+                log("KEY_STATS");
+                returnCursor = db.query(
+                        Contract.KeyStats.TABLE_NAME,
+                        projection,
+                        selection,
+                        selectionArgs,
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+
+            case KEY_STATS_FOR_SYMBOL: {
+                log("KEY_STATS_FOR_SYMBOL");
+                returnCursor = db.query(
+                        Contract.KeyStats.TABLE_NAME,
+                        projection,
+                        Contract.KeyStats.COLUMN_SYMBOL + " = ?",
+                        new String[]{ Contract.KeyStats.getStockFromUri(uri) },
+                        null,
+                        null,
+                        sortOrder
+                );
+                break;
+            }
+
+            default: {
                 throw new UnsupportedOperationException("Unknown URI:" + uri);
+            }
         }
 
         returnCursor.setNotificationUri(getContext().getContentResolver(), uri);
-
-//        if (db.isOpen()) {
-//            db.close();
-//        }
-
         return returnCursor;
     }
 
@@ -86,11 +128,13 @@ public class StockProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
+        log("insert :: uri " + uri.toString());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Uri returnUri;
 
         switch (uriMatcher.match(uri)) {
-            case QUOTE:
+            case QUOTE: {
+                log("QUOTE");
                 db.insert(
                         Contract.Quote.TABLE_NAME,
                         null,
@@ -98,18 +142,31 @@ public class StockProvider extends ContentProvider {
                 );
                 returnUri = Contract.Quote.URI;
                 break;
-            default:
+            }
+
+            case KEY_STATS: {
+                log("KEY_STATS");
+                db.insert(
+                        Contract.KeyStats.TABLE_NAME,
+                        null,
+                        values
+                );
+                returnUri = Contract.KeyStats.URI;
+                break;
+            }
+
+            default: {
                 throw new UnsupportedOperationException("Unknown URI:" + uri);
+            }
         }
 
         getContext().getContentResolver().notifyChange(uri, null);
-
-
         return returnUri;
     }
 
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
+        log("delete :: uri " + uri.toString());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
         int rowsDeleted;
 
@@ -117,16 +174,18 @@ public class StockProvider extends ContentProvider {
             selection = "1";
         }
         switch (uriMatcher.match(uri)) {
-            case QUOTE:
+            case QUOTE: {
+                log("QUOTE");
                 rowsDeleted = db.delete(
                         Contract.Quote.TABLE_NAME,
                         selection,
                         selectionArgs
                 );
-
                 break;
+            }
 
-            case QUOTE_FOR_SYMBOL:
+            case QUOTE_FOR_SYMBOL: {
+                log("QUOTE_FOR_SYMBOL");
                 String symbol = Contract.Quote.getStockFromUri(uri);
                 rowsDeleted = db.delete(
                         Contract.Quote.TABLE_NAME,
@@ -134,8 +193,32 @@ public class StockProvider extends ContentProvider {
                         selectionArgs
                 );
                 break;
-            default:
+            }
+
+            case KEY_STATS: {
+                log("KEY_STATS");
+                rowsDeleted = db.delete(
+                        Contract.KeyStats.TABLE_NAME,
+                        selection,
+                        selectionArgs
+                );
+                break;
+            }
+
+            case KEY_STATS_FOR_SYMBOL: {
+                log("KEY_STATS_FOR_SYMBOL");
+                String symbol = Contract.KeyStats.getStockFromUri(uri);
+                rowsDeleted = db.delete(
+                        Contract.KeyStats.TABLE_NAME,
+                        Contract.KeyStats.COLUMN_SYMBOL + " = " + '"' + symbol + '"',
+                        selectionArgs
+                );
+                break;
+            }
+
+            default: {
                 throw new UnsupportedOperationException("Unknown URI:" + uri);
+            }
         }
 
         if (rowsDeleted != 0) {
@@ -151,31 +234,72 @@ public class StockProvider extends ContentProvider {
 
     @Override
     public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
-
+        log("bulkInsert :: uri " + uri.toString());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         switch (uriMatcher.match(uri)) {
-            case QUOTE:
+            case QUOTE: {
+                log("QUOTE");
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
-                    for (ContentValues value : values) {
-                        db.insert(
+                    long rowId;
+                    for (int i = 0, l = values.length; i < l; i++) {
+                        rowId = db.insert(
                                 Contract.Quote.TABLE_NAME,
                                 null,
-                                value
+                                values[i]
                         );
+                        if (rowId != -1) {
+                            returnCount++;
+                        }
                     }
                     db.setTransactionSuccessful();
                 } finally {
                     db.endTransaction();
                 }
-                getContext().getContentResolver().notifyChange(uri, null);
+                if (getContext() != null) {
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
                 return returnCount;
-            default:
+            }
+
+            case KEY_STATS: {
+                log("KEY_STATS");
+                db.beginTransaction();
+                int returnCount = 0;
+                try {
+                    long rowId = -1;
+                    for (int i = 0, l = values.length; i < l; i++) {
+                        rowId = db.insert(
+                                Contract.KeyStats.TABLE_NAME,
+                                null,
+                                values[i]
+                        );
+                        if (rowId != -1) {
+                            returnCount++;
+                        }
+                    }
+                    db.setTransactionSuccessful();
+                } finally {
+                    db.endTransaction();
+                }
+                if (getContext() != null) {
+                    getContext().getContentResolver().notifyChange(uri, null);
+                }
+                return returnCount;
+            }
+
+            default: {
                 return super.bulkInsert(uri, values);
+            }
         }
+    }
 
-
+    @Override
+    public void shutdown() {
+        log("shutdown");
+        dbHelper.close();
+        super.shutdown();
     }
 }
