@@ -30,6 +30,7 @@ android {
             proguardFile "proguard-square-okhttp3.pro"
             proguardFile "proguard-square-okio.pro"
             proguardFile "proguard-support-v7-appcompat.pro"
+            proguardFile "proguard-eventbus3.pro"
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
