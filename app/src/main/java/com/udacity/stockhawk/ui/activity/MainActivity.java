@@ -4,20 +4,27 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import com.udacity.stockhawk.util.Constants;
 
-import timber.log.Timber;
-
 public class MainActivity extends AppCompatActivity {
+    private static final String tag = "DL-MA";
+    private static final boolean DEBUG = false;
+    private static void log(String message) {
+        if (DEBUG) {
+            Log.i(tag, message);
+        }
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        Timber.d("onCreate");
+        log("onCreate");
 
         StockListFragment stockListFragment = null;
         if (getSupportFragmentManager() != null) {
@@ -34,22 +41,23 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void onStockClick(String symbol, String name) {
+    public void onStockClick(String symbol, String name, float price) {
         Intent intent = new Intent(this, StockDetailActivity.class);
         intent.putExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL, symbol);
         intent.putExtra(Constants.INTENT_EXTRA_STOCK_NAME, name);
+        intent.putExtra(Constants.INTENT_EXTRA_STOCK_PRICE, String.valueOf(price));
         startActivity(intent);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Timber.d("onStart");
+        log("onStart");
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        Timber.d("onStop");
+        log("onStop");
     }
 }

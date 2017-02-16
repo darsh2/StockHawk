@@ -1,7 +1,6 @@
 package com.udacity.stockhawk.ui.adapter;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -9,46 +8,55 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.udacity.stockhawk.R;
-import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
+import com.udacity.stockhawk.model.StockQuote;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
 public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHolder> {
-
     private final Context context;
+
+    private ArrayList<StockQuote> stockQuotes;
+
     private final DecimalFormat dollarFormatWithPlus;
     private final DecimalFormat dollarFormat;
     private final DecimalFormat percentageFormat;
-    private Cursor cursor;
+
     private StockAdapterOnClickHandler clickHandler;
 
     public StockAdapter(Context context, StockAdapterOnClickHandler clickHandler) {
         this.context = context;
-        this.clickHandler = clickHandler;
 
         dollarFormat = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
         dollarFormatWithPlus = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
         dollarFormatWithPlus.setPositivePrefix("+$");
+
         percentageFormat = (DecimalFormat) NumberFormat.getPercentInstance(Locale.getDefault());
         percentageFormat.setMaximumFractionDigits(2);
         percentageFormat.setMinimumFractionDigits(2);
         percentageFormat.setPositivePrefix("+");
+
+        this.clickHandler = clickHandler;
     }
 
-    public void setCursor(Cursor cursor) {
-        this.cursor = cursor;
+    public void updateStockQuotes(ArrayList<StockQuote> stockQuotes) {
+        if (this.stockQuotes == null) {
+            this.stockQuotes = new ArrayList<>(stockQuotes.size());
+        } else {
+            this.stockQuotes.clear();
+        }
+        this.stockQuotes.addAll(stockQuotes);
         notifyDataSetChanged();
     }
 
     public String getSymbolAtPosition(int position) {
-        cursor.moveToPosition(position);
-        return cursor.getString(Contract.Quote.POSITION_SYMBOL);
+        return stockQuotes.get(position).symbol;
     }
 
     @Override
@@ -59,13 +67,11 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
 
     @Override
     public void onBindViewHolder(StockViewHolder holder, int position) {
-        cursor.moveToPosition(position);
+        holder.symbol.setText(stockQuotes.get(position).symbol);
+        holder.price.setText(dollarFormat.format(stockQuotes.get(position).price));
 
-        holder.symbol.setText(cursor.getString(Contract.Quote.POSITION_SYMBOL));
-        holder.price.setText(dollarFormat.format(cursor.getFloat(Contract.Quote.POSITION_PRICE)));
-
-        float rawAbsoluteChange = cursor.getFloat(Contract.Quote.POSITION_ABSOLUTE_CHANGE);
-        float percentageChange = cursor.getFloat(Contract.Quote.POSITION_PERCENTAGE_CHANGE);
+        float rawAbsoluteChange = stockQuotes.get(position).absoluteChange;
+        float percentageChange = stockQuotes.get(position).percentageChange;
 
         if (rawAbsoluteChange > 0) {
             holder.change.setBackgroundResource(R.drawable.percent_change_pill_green);
@@ -86,16 +92,19 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
 
     @Override
     public int getItemCount() {
-        int count = 0;
-        if (cursor != null) {
-            count = cursor.getCount();
+        if (stockQuotes != null) {
+            return stockQuotes.size();
         }
-        return count;
+        return 0;
     }
 
+    public void releaseResources() {
+        this.stockQuotes = null;
+        this.clickHandler = null;
+    }
 
     public interface StockAdapterOnClickHandler {
-        void onStockClick(String symbol, String name);
+        void onStockClick(String symbol, String name, float price);
     }
 
     class StockViewHolder extends RecyclerView.ViewHolder implements View.OnClickListener {
@@ -118,10 +127,10 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         @Override
         public void onClick(View v) {
             int adapterPosition = getAdapterPosition();
-            cursor.moveToPosition(adapterPosition);
             clickHandler.onStockClick(
-                    cursor.getString(Contract.Quote.POSITION_SYMBOL),
-                    cursor.getString(Contract.Quote.POSITION_NAME)
+                    stockQuotes.get(adapterPosition).symbol,
+                    stockQuotes.get(adapterPosition).name,
+                    stockQuotes.get(adapterPosition).price
             );
         }
     }
