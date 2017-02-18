@@ -160,11 +160,10 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         }
 
         if (!networkUp()) {
-            showSnackbar(getString(R.string.internet_connectivity_unavailable));
-            return;
+            showSnackbar(getString(R.string.toast_stock_added_no_connectivity));
+        } else {
+            swipeRefreshLayout.setRefreshing(true);
         }
-
-        swipeRefreshLayout.setRefreshing(true);
         PrefUtils.addStock(getActivity(), symbol);
         QuoteSyncJob.syncImmediately(getActivity());
     }
