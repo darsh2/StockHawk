@@ -47,4 +47,6 @@
     <string name="key_stats_market_cap" translatable="false">Mkt Cap&#58; %s</string>
     <string name="key_stats_year_low" translatable="false">Yr Low&#58; %s</string>
     <string name="key_stats_year_high" translatable="false">Yr High&#58; %s</string>
+
+    <string name="toast_error_no_internet_connection" translatable="false">No internet connection. Loading stock quotes saved in app.</string>
 </resources>

@@ -35,7 +35,15 @@ import yahoofinance.quotes.stock.StockQuote;
 public final class QuoteSyncJob {
     private static final int ONE_OFF_ID = 2;
     private static final String ACTION_DATA_UPDATED = "com.udacity.stockhawk.ACTION_DATA_UPDATED";
-    private static final int PERIOD = 3000;
+
+    /**
+     * Interval within which the job should recur. Increasing
+     * period to 15 minutes since {@link JobInfo#getMinPeriodMillis()}
+     * has a minimum default of 15 minutes as the interval for
+     * a periodic job.
+     */
+    private static final int PERIOD = 15 * 60 * 1000;
+
     private static final int INITIAL_BACKOFF = 10000;
     private static final int PERIODIC_ID = 1;
     private static final int YEARS_OF_HISTORY = 2;
@@ -44,7 +52,7 @@ public final class QuoteSyncJob {
     }
 
     static void getQuotes(Context context) {
-        log("Running sync job");
+        log("getQuotes");
 
         Calendar from = Calendar.getInstance();
         Calendar to = Calendar.getInstance();
@@ -126,22 +134,28 @@ public final class QuoteSyncJob {
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
-        } catch (IOException ioException) {
-            log("Error fetching stock quotes");
-            ioException.printStackTrace();
-            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR));
-
         } catch (NullPointerException nullPointerException) {
             log("Stock symbol not found");
             nullPointerException.printStackTrace();
             EventBus.getDefault().post(new ErrorEvent(ErrorEvent.SYMBOL_NOT_FOUND_ERROR));
+        } catch (IOException ioException) {
+            log("IOException: Error fetching stock quotes");
+            ioException.printStackTrace();
+            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR));
+
         }
     }
 
     private static void schedulePeriodic(Context context) {
-        log("Scheduling a periodic task");
-
+        log("schedulePeriodic");
         JobInfo.Builder builder = new JobInfo.Builder(PERIODIC_ID, new ComponentName(context, QuoteJobService.class));
+        /*
+        Setting a linear back off policy because the periodic job of
+        fetching stock quotes happens once every fifteen minutes. Using
+        an exponential back off policy is would imply long wait periods
+        where the stock quotes are not updated even though internet
+        connectivity may have been restored.
+         */
         builder.setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
                 .setPeriodic(PERIOD)
                 .setBackoffCriteria(INITIAL_BACKOFF, JobInfo.BACKOFF_POLICY_EXPONENTIAL);
@@ -150,13 +164,13 @@ public final class QuoteSyncJob {
         scheduler.schedule(builder.build());
     }
 
-
     public static synchronized void initialize(final Context context) {
         schedulePeriodic(context);
         syncImmediately(context);
     }
 
     public static synchronized void syncImmediately(Context context) {
+        log("syncImmediately");
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();

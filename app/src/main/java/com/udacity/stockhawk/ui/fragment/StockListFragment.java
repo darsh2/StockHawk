@@ -21,7 +21,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
@@ -49,7 +48,6 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.observers.DisposableSingleObserver;
 import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 /**
  * Created by darshan on 14/1/17.
@@ -84,6 +82,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         View view = inflater.inflate(R.layout.fragment_stocks_list, container, true);
         ButterKnife.bind(this, view);
 
+        stockQuotes = new ArrayList<>();
         adapter = new StockAdapter(getContext(), this);
         stockRecyclerView.setAdapter(adapter);
         stockRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -91,9 +90,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setRefreshing(true);
         EventBus.getDefault().register(this);
-        onRefresh();
-
-        QuoteSyncJob.initialize(getContext());
+        initialize();
 
         itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.END) {
             @Override
@@ -113,31 +110,34 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         return super.onCreateView(inflater, container, savedInstanceState);
     }
 
+    /**
+     * Intimates user about validity of stock quotes being fetched, ie,
+     * if there is no internet connection, load stock quotes from db.
+     * Starts the periodic and one off job to fetch stock quotes.
+     */
+    public void initialize() {
+        log("initialize");
+        swipeRefreshLayout.setRefreshing(true);
+        if (!networkUp()) {
+            loadStockQuotes();
+            showSnackbar(getString(R.string.toast_error_no_internet_connection));
+        }
+        QuoteSyncJob.initialize(getContext());
+    }
+
     @Override
     public void onRefresh() {
-        QuoteSyncJob.syncImmediately(getActivity());
-
-        if (!networkUp() && adapter.getItemCount() == 0) {
-            swipeRefreshLayout.setRefreshing(false);
-            error.setText(getString(R.string.error_no_network));
-            error.setVisibility(View.VISIBLE);
-
-        } else if (!networkUp()) {
-            swipeRefreshLayout.setRefreshing(false);
-            Toast.makeText(getActivity(), R.string.toast_no_connectivity, Toast.LENGTH_LONG).show();
-
-        } else if (PrefUtils.getStocks(getActivity()).size() == 0) {
-            Timber.d("WHYAREWEHERE");
-            swipeRefreshLayout.setRefreshing(false);
-            error.setText(getString(R.string.error_no_stocks));
-            error.setVisibility(View.VISIBLE);
-
-        } else {
-            error.setVisibility(View.GONE);
+        log("onRefresh");
+        error.setVisibility(View.GONE);
+        if (!networkUp()) {
+            loadStockQuotes();
+            showSnackbar(getString(R.string.toast_error_no_internet_connection));
         }
+        QuoteSyncJob.syncImmediately(getContext());
     }
 
     private boolean networkUp() {
+        log("networkUp");
         ConnectivityManager cm =
                 (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
@@ -277,6 +277,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private boolean retrieveStockQuotesFromDb() {
+        log("retrieveStockQuotesFromDb");
         if (getContext() == null) {
             throw new NullPointerException("getContext() returned null");
         }
@@ -312,8 +313,19 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     private void updateAdapterView() {
         log("updateAdapterView");
-        adapter.updateStockQuotes(stockQuotes);
         swipeRefreshLayout.setRefreshing(false);
+        if (stockQuotes.size() > 0) {
+            error.setVisibility(View.GONE);
+            adapter.updateStockQuotes(stockQuotes);
+            return;
+        }
+
+        if (PrefUtils.getStocks(getContext()).size() == 0) {
+            error.setText(getString(R.string.error_no_stocks));
+        } else {
+            error.setText(getString(R.string.error_no_network));
+        }
+        error.setVisibility(View.VISIBLE);
     }
 
     @Override

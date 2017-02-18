@@ -22,13 +22,14 @@ public class QuoteJobService extends JobService {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        log("onStartCommand");
+        log("onStartCommand ");
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
-        log("onStartJob");
+        log("onStartJob " + jobParameters.getJobId());
+        log("Job id: " + jobParameters.getJobId());
         Intent nowIntent = new Intent(getApplicationContext(), QuoteIntentService.class);
         getApplicationContext().startService(nowIntent);
         return true;
@@ -36,7 +37,19 @@ public class QuoteJobService extends JobService {
 
     @Override
     public boolean onStopJob(JobParameters jobParameters) {
-        log("onStopJob");
-        return false;
+        log("onStopJob " + jobParameters.getJobId());
+        /*
+        Return true to indicate to the JobManager that the job
+        should be rescheduled based on the retry criteria provided
+        at the time of job creation. Required especially when
+        scheduling an one off job to sync stock quotes immediately.
+        For instance, consider the scenario where internet access is
+        disrupted while fetching stock quotes. Hence onStopJob is
+        called before the job can finish itself. In this scenario, it
+        would be preferred if the job retries according to the retry
+        criteria provided so that the stock quotes will be automatically
+        refreshed rather than the user having to explicitly refresh it.
+         */
+        return true;
     }
 }
