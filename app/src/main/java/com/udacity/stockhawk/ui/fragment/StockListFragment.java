@@ -32,6 +32,7 @@ import com.udacity.stockhawk.sync.event.ErrorEvent;
 import com.udacity.stockhawk.ui.activity.MainActivity;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
+import com.udacity.stockhawk.util.Constants;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -90,7 +91,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setRefreshing(true);
         EventBus.getDefault().register(this);
-        initialize();
+        initialize(savedInstanceState);
 
         itemTouchHelper = new ItemTouchHelper(new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.END) {
             @Override
@@ -115,8 +116,17 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
      * if there is no internet connection, load stock quotes from db.
      * Starts the periodic and one off job to fetch stock quotes.
      */
-    public void initialize() {
+    public void initialize(Bundle savedInstanceState) {
         log("initialize");
+        if (savedInstanceState != null
+                && savedInstanceState.getParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES) != null) {
+            swipeRefreshLayout.setRefreshing(false);
+
+            stockQuotes = savedInstanceState.getParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES);
+            adapter.updateStockQuotes(stockQuotes);
+            return;
+        }
+
         swipeRefreshLayout.setRefreshing(true);
         if (!networkUp()) {
             loadStockQuotes();
@@ -194,6 +204,13 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             item.setIcon(R.drawable.ic_percentage);
         } else {
             item.setIcon(R.drawable.ic_dollar);
+        }
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (stockQuotes != null) {
+            outState.putParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES, stockQuotes);
         }
     }
 
