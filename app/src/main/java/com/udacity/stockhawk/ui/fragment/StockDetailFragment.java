@@ -34,7 +34,6 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
@@ -106,9 +105,7 @@ public class StockDetailFragment extends Fragment {
 
     private CompositeDisposable disposables;
 
-    private DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver;
-
-    private ArrayList<String> date;
+    private ArrayList<Long> date;
     private ArrayList<Entry> stockQuotes;
 
     private ArrayList<String> stockKeyStats;
@@ -208,9 +205,15 @@ public class StockDetailFragment extends Fragment {
     }
 
     private class DateAxisValueFormatter implements IAxisValueFormatter {
+        private SimpleDateFormat simpleDateFormat;
+
+        DateAxisValueFormatter() {
+            simpleDateFormat = new SimpleDateFormat("MMM yy", Locale.getDefault());
+        }
+
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
-            return date.get((int) value);
+            return simpleDateFormat.format(date.get((int) value));
         }
     }
 
@@ -278,15 +281,13 @@ public class StockDetailFragment extends Fragment {
         int numHistoricalQuotes = historicalQuotes.length;
 
         date = new ArrayList<>(numHistoricalQuotes);
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMM yyyy", Locale.getDefault());
-
         stockQuotes = new ArrayList<>(numHistoricalQuotes);
 
         // The stock quotes are in descending order of date.
         for (int i = numHistoricalQuotes - 1, entryX = 0; i >= 0; i--) {
             String[] entry = historicalQuotes[i].split(", ");
             stockQuotes.add(new Entry(entryX++, (new BigDecimal(entry[1])).floatValue()));
-            date.add(simpleDateFormat.format(new Date(Long.parseLong(entry[0]))));
+            date.add(Long.parseLong(entry[0]));
         }
         return stockQuotes;
     }
@@ -423,17 +424,19 @@ public class StockDetailFragment extends Fragment {
 
     private class CustomMarkerView extends MarkerView {
         private MPPointF offset;
+        private SimpleDateFormat simpleDateFormat;
 
         public CustomMarkerView(Context context, int layoutResource) {
             super(context, layoutResource);
             offset = new MPPointF(0, 0);
+            simpleDateFormat = new SimpleDateFormat("d MMM yyyy", Locale.getDefault());
         }
 
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
             int xPosition = (int) e.getX();
             float stockQuote = e.getY();
-            textViewMarker.setText(date.get(xPosition) + ", $" + stockQuote);
+            textViewMarker.setText(simpleDateFormat.format(date.get(xPosition)) + ", $" + stockQuote);
             super.refreshContent(e, highlight);
         }
 
