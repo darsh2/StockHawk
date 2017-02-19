@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -34,6 +35,7 @@ import java.math.BigDecimal;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Locale;
 import java.util.concurrent.Callable;
 
@@ -82,6 +84,10 @@ public class StockDetailFragment extends Fragment {
 
     private IMarker marker;
 
+    @BindView(R.id.tab_layout)
+    TabLayout tabLayout;
+    private TabLayout.OnTabSelectedListener onTabSelectedListener;
+
     /*
     Key Stats view
      */
@@ -105,8 +111,14 @@ public class StockDetailFragment extends Fragment {
 
     private CompositeDisposable disposables;
 
-    private ArrayList<Long> date;
+    private ArrayList<Long> dates;
     private ArrayList<Entry> stockQuotes;
+
+    private ArrayList<Long> datesToShow;
+    private ArrayList<Entry> stockQuotesToShow;
+
+    private LineDataSet lineDataSet;
+    private LineData lineData;
 
     private ArrayList<String> stockKeyStats;
 
@@ -155,26 +167,25 @@ public class StockDetailFragment extends Fragment {
         styleLineChart();
         styleDateAxis();
         styleStockCloseAxis();
-
+        styleDataSet();
         loadHistoricalStockQuotes();
     }
 
     private void styleLineChart() {
         lineChart.setTouchEnabled(true);
-        lineChart.setDragEnabled(true);
-        lineChart.setScaleEnabled(true);
-        lineChart.setPinchZoom(true);
-        lineChart.setMaxHighlightDistance(300);
 
-        lineChart.setBackgroundColor(Color.WHITE);
+        lineChart.setDragEnabled(false);
+        lineChart.setHighlightPerDragEnabled(false);
+
+        lineChart.setScaleEnabled(false);
+        lineChart.setPinchZoom(false);
+
         /*
         Required to set lineChart's background color to the specified
         value. Ref: http://stackoverflow.com/a/32624619/3946664
          */
-
+        lineChart.setBackgroundColor(Color.WHITE);
         lineChart.setDrawGridBackground(false);
-
-        lineChart.setHighlightPerDragEnabled(false);
 
         lineChart.getDescription().setEnabled(false);
         lineChart.getLegend().setEnabled(false);
@@ -188,20 +199,11 @@ public class StockDetailFragment extends Fragment {
         XAxis dateAxis = lineChart.getXAxis();
         dateAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
         dateAxis.setLabelCount(4, false);
+        dateAxis.setGranularity(1f);
         dateAxis.setDrawGridLines(true);
         dateAxis.setAxisLineColor(Color.BLACK);
         dateAxis.setTextColor(Color.BLACK);
         dateAxis.setValueFormatter(new DateAxisValueFormatter());
-    }
-
-    private void styleStockCloseAxis() {
-        YAxis stockCloseAxis = lineChart.getAxisLeft();
-        stockCloseAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        stockCloseAxis.setLabelCount(4, false);
-        stockCloseAxis.setDrawGridLines(true);
-        stockCloseAxis.setAxisLineColor(Color.BLACK);
-        stockCloseAxis.setTextColor(Color.BLACK);
-        stockCloseAxis.setValueFormatter(new StockCloseAxisValueFormatter());
     }
 
     private class DateAxisValueFormatter implements IAxisValueFormatter {
@@ -213,8 +215,24 @@ public class StockDetailFragment extends Fragment {
 
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
-            return simpleDateFormat.format(date.get((int) value));
+            int position = (int) value;
+            position -= (dates.size() - datesToShow.size());
+            if (position < 0 || position >= datesToShow.size()) {
+                return "";
+            }
+            return simpleDateFormat.format(datesToShow.get(position));
         }
+    }
+
+    private void styleStockCloseAxis() {
+        YAxis stockCloseAxis = lineChart.getAxisLeft();
+        stockCloseAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        stockCloseAxis.setLabelCount(4, false);
+        stockCloseAxis.setGranularity(1f);
+        stockCloseAxis.setDrawGridLines(true);
+        stockCloseAxis.setAxisLineColor(Color.BLACK);
+        stockCloseAxis.setTextColor(Color.BLACK);
+        stockCloseAxis.setValueFormatter(new StockCloseAxisValueFormatter());
     }
 
     private class StockCloseAxisValueFormatter implements IAxisValueFormatter {
@@ -226,15 +244,31 @@ public class StockDetailFragment extends Fragment {
 
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
-            //log("Value: " + value);
-            return decimalFormat.format(value) + "$";
+            return "$" + decimalFormat.format(value);
         }
     }
 
+    private void styleDataSet() {
+        lineDataSet = new LineDataSet(null, "Historical Stock Quotes");
+        lineDataSet.setDrawCircles(false);
+        lineDataSet.setLineWidth(1.8f);
+        lineDataSet.setColor(Color.GREEN);
+        lineDataSet.setDrawFilled(true);
+        lineDataSet.setFillColor(Color.GREEN);
+        lineDataSet.setFillAlpha(100);
+        lineDataSet.setDrawHighlightIndicators(true);
+        lineDataSet.setHighLightColor(Color.rgb(244, 117, 117));
+
+        lineData = new LineData(lineDataSet);
+        lineData.setDrawValues(false);
+
+        lineChart.setData(lineData);
+    }
+
     private void loadHistoricalStockQuotes() {
-        Single<ArrayList<Entry>> stockQuotesSingle = Single.fromCallable(new Callable<ArrayList<Entry>>() {
+        Single<Boolean> stockQuotesSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
-            public ArrayList<Entry> call() throws Exception {
+            public Boolean call() throws Exception {
                 log("stockQuotesSingle - call");
                 return retrieveStockQuotesFromDb();
             }
@@ -242,12 +276,12 @@ public class StockDetailFragment extends Fragment {
         stockQuotesSingle
                 .subscribeOn(Schedulers.newThread())
                 .observeOn(AndroidSchedulers.mainThread());
-        DisposableSingleObserver<ArrayList<Entry>> disposableSingleObserver = stockQuotesSingle
-                .subscribeWith(new DisposableSingleObserver<ArrayList<Entry>>() {
+        DisposableSingleObserver<Boolean> disposableSingleObserver = stockQuotesSingle
+                .subscribeWith(new DisposableSingleObserver<Boolean>() {
                     @Override
-                    public void onSuccess(ArrayList<Entry> value) {
+                    public void onSuccess(Boolean value) {
                         log("stockQuotesSingleObserver - onSuccess");
-                        drawGraph(value);
+                        drawGraph();
                     }
 
                     @Override
@@ -258,7 +292,7 @@ public class StockDetailFragment extends Fragment {
         disposables.add(disposableSingleObserver);
     }
 
-    private ArrayList<Entry> retrieveStockQuotesFromDb() {
+    private boolean retrieveStockQuotesFromDb() {
         log("retrieveStockQuotesFromDb");
         Cursor cursor = getContext().getContentResolver()
                 .query(
@@ -280,37 +314,151 @@ public class StockDetailFragment extends Fragment {
         String[] historicalQuotes = history.split("\n");
         int numHistoricalQuotes = historicalQuotes.length;
 
-        date = new ArrayList<>(numHistoricalQuotes);
+        dates = new ArrayList<>(numHistoricalQuotes);
         stockQuotes = new ArrayList<>(numHistoricalQuotes);
 
-        // The stock quotes are in descending order of date.
+        // The stock quotes are in descending order of dates.
         for (int i = numHistoricalQuotes - 1, entryX = 0; i >= 0; i--) {
             String[] entry = historicalQuotes[i].split(", ");
             stockQuotes.add(new Entry(entryX++, (new BigDecimal(entry[1])).floatValue()));
-            date.add(Long.parseLong(entry[0]));
+            dates.add(Long.parseLong(entry[0]));
         }
-        return stockQuotes;
+        return getStocksFromDate(Long.MIN_VALUE);
     }
 
-    private void drawGraph(ArrayList<Entry> arrayList) {
+    private boolean getStocksFromDate(long from) {
+        if (datesToShow == null) {
+            datesToShow = new ArrayList<>();
+            stockQuotesToShow = new ArrayList<>();
+        } else {
+            datesToShow.clear();
+            stockQuotesToShow.clear();
+        }
+
+        for (int i = 0, l = dates.size(); i < l; i++) {
+            if (dates.get(i) > from) {
+                datesToShow.add(dates.get(i));
+                stockQuotesToShow.add(stockQuotes.get(i));
+            }
+        }
+        Log.i("ABCDE", "O: " + dates.size() + ", " + stockQuotes.size());
+        Log.i("ABCDE", "M: " + datesToShow.size() + ", " + stockQuotesToShow.size());
+        return true;
+    }
+
+    private void drawGraph() {
         log("drawGraph");
-        LineDataSet lineDataSet = new LineDataSet(arrayList, "Historical Stock Quotes");
+        lineDataSet.clear();
+        lineData.clearValues();
 
-        lineDataSet.setDrawCircles(false);
-        lineDataSet.setLineWidth(1.8f);
-        lineDataSet.setColor(Color.GREEN);
-        lineDataSet.setDrawFilled(true);
-        lineDataSet.setFillColor(Color.GREEN);
-        lineDataSet.setFillAlpha(100);
-        lineDataSet.setDrawHighlightIndicators(true);
-        lineDataSet.setHighLightColor(Color.rgb(244, 117, 117));
+        for (int i = 0; i < stockQuotesToShow.size(); i++) {
+            lineDataSet.addEntry(stockQuotesToShow.get(i));
+        }
+        lineData.addDataSet(lineDataSet);
+        lineChart.setData(lineData);
 
-        LineData data = new LineData(lineDataSet);
-        data.setValueTextSize(9f);
-        data.setDrawValues(false);
-
-        lineChart.setData(data);
+        lineDataSet.notifyDataSetChanged();
+        lineData.notifyDataChanged();
+        lineChart.notifyDataSetChanged();
         lineChart.invalidate();
+
+        setTabLayoutListener();
+    }
+
+    private void setTabLayoutListener() {
+        if (onTabSelectedListener != null) {
+            return;
+        }
+
+        /*
+        Initially show chart of stock prices for
+        two years. Hence select tab four which
+        says 2 years.
+         */
+        if (tabLayout.getTabAt(3) != null) {
+            tabLayout.getTabAt(3).select();
+        }
+
+        onTabSelectedListener = new TabLayout.OnTabSelectedListener() {
+            @Override
+            public void onTabSelected(TabLayout.Tab tab) {
+                int months;
+                Calendar calendar = Calendar.getInstance();
+                switch (tab.getPosition()) {
+                    case 0: {
+                        months = -1;
+                        lineChart.getXAxis().setLabelCount(2, false);
+                        break;
+                    }
+
+                    case 1: {
+                        months = -3;
+                        lineChart.getXAxis().setLabelCount(3, false);
+                        break;
+                    }
+
+                    case 2: {
+                        months = -6;
+                        lineChart.getXAxis().setLabelCount(3, false);
+                        break;
+                    }
+
+                    default: {
+                        months = -30;
+                        lineChart.getAxisLeft().setLabelCount(4, false);
+                        break;
+                    }
+                }
+                calendar.add(Calendar.MONTH, months);
+
+                /*
+                Clear line chart marker for a particular entry as
+                the values loaded into the chart now changes on
+                changing the time period of viewing stocks.
+                 */
+                textViewMarker.setText("");
+                lineChart.setSelected(false);
+
+                getStocksFromDate(calendar.getTimeInMillis());
+                drawGraph();
+            }
+
+            @Override
+            public void onTabUnselected(TabLayout.Tab tab) {
+
+            }
+
+            @Override
+            public void onTabReselected(TabLayout.Tab tab) {
+
+            }
+        };
+        tabLayout.addOnTabSelectedListener(onTabSelectedListener);
+    }
+
+    private class CustomMarkerView extends MarkerView {
+        private MPPointF offset;
+        private SimpleDateFormat simpleDateFormat;
+
+        public CustomMarkerView(Context context, int layoutResource) {
+            super(context, layoutResource);
+            offset = new MPPointF(0, 0);
+            simpleDateFormat = new SimpleDateFormat("d MMM yyyy", Locale.getDefault());
+        }
+
+        @Override
+        public void refreshContent(Entry e, Highlight highlight) {
+            int xPosition = (int) e.getX();
+            xPosition -= (dates.size() - datesToShow.size());
+            float stockQuote = e.getY();
+            textViewMarker.setText(simpleDateFormat.format(datesToShow.get(xPosition)) + ", $" + stockQuote);
+            super.refreshContent(e, highlight);
+        }
+
+        @Override
+        public MPPointF getOffset() {
+            return offset;
+        }
     }
 
     private void loadStockKeyStats() {
@@ -343,29 +491,12 @@ public class StockDetailFragment extends Fragment {
         disposables.add(disposableSingleObserver);
     }
 
-    private static final String tag = "CL-SDF";
-    private static final boolean DEBUG = true;
-    private static final void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
-        }
-    }
-
     private boolean retrieveStockKeyStatsFromDb() {
         log("retrieveStockKeyStatsFromDb");
         Cursor cursor = getContext().getContentResolver()
                 .query(
                         Contract.KeyStats.makeUriForStockKeyStats(stockSymbol),
-                        new String[] {
-                                Contract.KeyStats.COLUMN_DAY_LOW,
-                                Contract.KeyStats.COLUMN_DAY_HIGH,
-                                Contract.KeyStats.COLUMN_OPEN,
-                                Contract.KeyStats.COLUMN_PREV_CLOSE,
-                                Contract.KeyStats.COLUMN_VOLUME,
-                                Contract.KeyStats.COLUMN_MARKET_CAP,
-                                Contract.KeyStats.COLUMN_YEAR_LOW,
-                                Contract.KeyStats.COLUMN_YEAR_HIGH
-                        },
+                        Constants.KEY_STATS_COLUMN_NAMES,
                         null,
                         null,
                         null
@@ -378,11 +509,26 @@ public class StockDetailFragment extends Fragment {
         stockKeyStats = new ArrayList<>(8);
         for (int i = 0; i < 8; i++) {
             stockKeyStats.add(String.valueOf(
-                    cursor.getFloat(cursor.getColumnIndex(KEY_STATS_COLUMN_NAMES[i]))
+                    cursor.getFloat(cursor.getColumnIndex(Constants.KEY_STATS_COLUMN_NAMES[i]))
             ));
-            log(KEY_STATS_COLUMN_NAMES[i] + ": " + stockKeyStats.get(i));
         }
         cursor.close();
+
+        // Display volume as 'x million'
+        float volume = Float.parseFloat(stockKeyStats.get(Constants.POSITION_VOLUME));
+        volume /= Constants.ONE_MILLION;
+        stockKeyStats.set(
+                Constants.POSITION_VOLUME,
+                new DecimalFormat("##.####M").format(volume)
+        );
+
+        // Display market cap as 'y billion'
+        float marketCap = Float.parseFloat(stockKeyStats.get(Constants.POSITION_MARKET_CAP));
+        marketCap /= Constants.ONE_BILLION;
+        stockKeyStats.set(
+                Constants.POSITION_MARKET_CAP,
+                new DecimalFormat("##.####B").format(marketCap)
+        );
 
         log("KeyStats: " + stockKeyStats.toString());
         return true;
@@ -392,20 +538,26 @@ public class StockDetailFragment extends Fragment {
         log("updateKeyStatsView");
         textViewDayRange.setText(String.format(
                 getString(R.string.day_range),
-                stockKeyStats.get(0) + " - " + stockKeyStats.get(1)
+                stockKeyStats.get(Constants.POSITION_DAY_LOW) + " - " + stockKeyStats.get(Constants.POSITION_DAY_HIGH)
         ));
         textViewOpen.setText(String.format(
-                getString(R.string.key_stats_open), stockKeyStats.get(2)));
+                getString(R.string.key_stats_open), stockKeyStats.get(Constants.POSITION_OPEN)
+        ));
         textViewPreviousClose.setText(String.format(
-                getString(R.string.key_stats_prev_close), stockKeyStats.get(3)));
+                getString(R.string.key_stats_prev_close), stockKeyStats.get(Constants.POSITION_PREV_CLOSE)
+        ));
         textViewVolume.setText(String.format(
-                getString(R.string.key_stats_volume), stockKeyStats.get(4)));
+                getString(R.string.key_stats_volume), stockKeyStats.get(Constants.POSITION_VOLUME)
+        ));
         textViewMarketCap.setText(String.format(
-                getString(R.string.key_stats_market_cap), stockKeyStats.get(5)));
+                getString(R.string.key_stats_market_cap), stockKeyStats.get(Constants.POSITION_MARKET_CAP)
+        ));
         textViewYearLow.setText(String.format(
-                getString(R.string.key_stats_year_low), stockKeyStats.get(6)));
+                getString(R.string.key_stats_year_low), stockKeyStats.get(Constants.POSITION_YEAR_LOW)
+        ));
         textViewYearHigh.setText(String.format(
-                getString(R.string.key_stats_year_high), stockKeyStats.get(7)));
+                getString(R.string.key_stats_year_high), stockKeyStats.get(Constants.POSITION_YEAR_HIGH)
+        ));
     }
 
     @Override
@@ -413,8 +565,20 @@ public class StockDetailFragment extends Fragment {
         super.onDestroyView();
         log("onDestroyView");
 
+        /*
+        Release references that various objects may be
+        holding in order to allow for garbage collection.
+         */
+
+        lineDataSet.clear();
+        lineData.clearValues();
+        lineChart.clear();
+
         lineChart.setMarker(null);
         marker = null;
+
+        tabLayout.removeOnTabSelectedListener(onTabSelectedListener);
+        onTabSelectedListener = null;
 
         disposables.dispose();
         if (disposables.isDisposed()) {
@@ -422,38 +586,11 @@ public class StockDetailFragment extends Fragment {
         }
     }
 
-    private class CustomMarkerView extends MarkerView {
-        private MPPointF offset;
-        private SimpleDateFormat simpleDateFormat;
-
-        public CustomMarkerView(Context context, int layoutResource) {
-            super(context, layoutResource);
-            offset = new MPPointF(0, 0);
-            simpleDateFormat = new SimpleDateFormat("d MMM yyyy", Locale.getDefault());
-        }
-
-        @Override
-        public void refreshContent(Entry e, Highlight highlight) {
-            int xPosition = (int) e.getX();
-            float stockQuote = e.getY();
-            textViewMarker.setText(simpleDateFormat.format(date.get(xPosition)) + ", $" + stockQuote);
-            super.refreshContent(e, highlight);
-        }
-
-        @Override
-        public MPPointF getOffset() {
-            return offset;
+    private static final String tag = "CL-SDF";
+    private static final boolean DEBUG = true;
+    private static final void log(String message) {
+        if (DEBUG) {
+            Log.i(tag, message);
         }
     }
-
-    private final String[] KEY_STATS_COLUMN_NAMES = {
-            Contract.KeyStats.COLUMN_DAY_LOW,
-            Contract.KeyStats.COLUMN_DAY_HIGH,
-            Contract.KeyStats.COLUMN_OPEN,
-            Contract.KeyStats.COLUMN_PREV_CLOSE,
-            Contract.KeyStats.COLUMN_VOLUME,
-            Contract.KeyStats.COLUMN_MARKET_CAP,
-            Contract.KeyStats.COLUMN_YEAR_LOW,
-            Contract.KeyStats.COLUMN_YEAR_HIGH
-    };
 }

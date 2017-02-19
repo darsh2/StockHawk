@@ -50,7 +50,6 @@
                 android:paddingTop="3dp"
                 android:maxLines="1"/>
 
-
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
@@ -77,13 +76,44 @@
                     android:layout_width="match_parent"
                     android:layout_height="300dp"
                     android:padding="10dp"/>
+
+                <android.support.design.widget.TabLayout
+                    android:id="@+id/tab_layout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <android.support.design.widget.TabItem
+                        android:id="@+id/tab_item_one_month"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1M"/>
+
+                    <android.support.design.widget.TabItem
+                        android:id="@+id/tab_item_three_months"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="3M"/>
+
+                    <android.support.design.widget.TabItem
+                        android:id="@+id/tab_item_six_months"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="6M"/>
+
+                    <android.support.design.widget.TabItem
+                        android:id="@+id/tab_item_two_years"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="2Y"/>
+                </android.support.design.widget.TabLayout>
             </LinearLayout>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
-                android:text="KEY STATS"/>
+                android:text="@string/key_stats"
+                android:textStyle="bold"/>
 
             <LinearLayout
                 android:layout_width="match_parent"

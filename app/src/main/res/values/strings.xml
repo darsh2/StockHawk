@@ -40,6 +40,7 @@
 
     <string name="toast_action_ok" translatable="false">OK</string>
 
+    <string name="key_stats" translatable="false">KEY STATS</string>
     <string name="day_range" translatable="false">Day Range&#58; %s</string>
     <string name="key_stats_open" translatable="false">Open&#58; %s</string>
     <string name="key_stats_prev_close" translatable="false">Prev Close&#58; %s</string>
