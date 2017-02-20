@@ -5,7 +5,6 @@
 
     <string name="pref_stocks_key">stocks</string>
 
-
     <string name="pref_display_mode_key">displayMode</string>
     <string name="pref_display_mode_default">@string/pref_display_mode_percentage_key</string>
 
@@ -17,9 +16,7 @@
     <string name="default_stocks_microsoft">MSFT</string>
     <string name="default_stocks_facebook">FB</string>
 
-
     <string name="action_change_units">@string/pref_display_mode_key</string>
-
 
     <string name="dialog_title">Add Stock</string>
     <string name="dialog_hint">Symbol (e.g. GOOG)</string>
@@ -39,6 +36,12 @@
     <string name="error_stock_symbol_not_found" translatable="false">Stock symbol not found. Please enter a valid symbol.</string>
 
     <string name="toast_action_ok" translatable="false">OK</string>
+
+    <string name="tap_graph" translatable="false">Tap graph to view stock value at time</string>
+    <string name="one_month" translatable="false">1M</string>
+    <string name="three_months" translatable="false">3M</string>
+    <string name="six_months" translatable="false">6M</string>
+    <string name="two_years" translatable="false">2Y</string>
 
     <string name="key_stats" translatable="false">KEY STATS</string>
     <string name="day_range" translatable="false">Day Range&#58; %s</string>

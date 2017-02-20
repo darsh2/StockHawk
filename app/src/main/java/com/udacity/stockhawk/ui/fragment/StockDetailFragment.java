@@ -111,10 +111,28 @@ public class StockDetailFragment extends Fragment {
 
     private CompositeDisposable disposables;
 
+    /**
+     * List of all dates in the historical data fetched
+     * from API.
+     */
     private ArrayList<Long> dates;
+
+    /**
+     * Stock quotes at all dates in {@link StockDetailFragment#dates
+     * dates}.
+     */
     private ArrayList<Entry> stockQuotes;
 
+    /**
+     * The actual dates to consider for adding to
+     * the chart based on the user selected time period.
+     */
     private ArrayList<Long> datesToShow;
+
+    /**
+     * The stock quotes corresponding to the time instants
+     * in {@link StockDetailFragment#datesToShow datesToShow}.
+     */
     private ArrayList<Entry> stockQuotesToShow;
 
     private LineDataSet lineDataSet;
@@ -216,6 +234,49 @@ public class StockDetailFragment extends Fragment {
         @Override
         public String getFormattedValue(float value, AxisBase axis) {
             int position = (int) value;
+            /*
+            Consider the dates arrayList. It has following form:
+            2 years from current date
+            .
+            .
+            6 months from current date
+            .
+            .
+            3 months from current date
+            .
+            .
+            1 month from current date
+            .
+            .
+
+            Initially, the stock quote entries corresponding to the entire
+            dates arrayList is loaded into the chart. Hence label indices
+            always correspond to the dates arrayList.
+
+            However on changing the time period, the label indices either
+            fall within the 1, 3, or 6 months range of the dates arrayList.
+            Since we use datesToShow to indicate the modify time period, and
+            we have indices corresponding to dates arrayList, we need to compute
+            equivalent indices for datesToShow.
+
+            dateToShow start from a particular month period and extend till the
+            end of dates. Assume time period selected = 3 months from current date,
+            dates.size() = 100, and dates.range 65 - 99 : 3 months from current
+            date to current date
+            Hence,
+            datesToShow has all entries of dates from 65 - 99
+            datesToShow.size() = 35
+            datesToShow - dates mapping:
+            0 - 65
+            1 - 66
+            2 - 67
+            .
+            .
+            Label index corresponding to dates = 70
+            Equivalent datesToShow index = 70 - (dates.size() - datesToShow.size())
+                                         = 70 - 65
+                                         = 5
+             */
             position -= (dates.size() - datesToShow.size());
             if (position < 0 || position >= datesToShow.size()) {
                 return "";
@@ -326,6 +387,10 @@ public class StockDetailFragment extends Fragment {
         return getStocksFromDate(Long.MIN_VALUE);
     }
 
+    /**
+     * Stores all the dates and stock quotes <strong>from</strong>
+     * the specified date.
+     */
     private boolean getStocksFromDate(long from) {
         if (datesToShow == null) {
             datesToShow = new ArrayList<>();
@@ -348,7 +413,9 @@ public class StockDetailFragment extends Fragment {
 
     private void drawGraph() {
         log("drawGraph");
+        // Clears all entries in the arrayList containing chart entries
         lineDataSet.clear();
+        // Clears the dataSets list
         lineData.clearValues();
 
         for (int i = 0; i < stockQuotesToShow.size(); i++) {
@@ -357,11 +424,21 @@ public class StockDetailFragment extends Fragment {
         lineData.addDataSet(lineDataSet);
         lineChart.setData(lineData);
 
+        /*
+        Indicate to the dataSet, data and chart that values have changed
+        and recompute (ex: calculating min and max) various fields to
+        ensure chart is correctly drawn.
+         */
         lineDataSet.notifyDataSetChanged();
         lineData.notifyDataChanged();
         lineChart.notifyDataSetChanged();
         lineChart.invalidate();
 
+        /*
+        Set listener for time period changes only after the chart
+        is drawn to avoid recomputing graph entries and redrawing
+        chart mid way during another draw operation.
+         */
         setTabLayoutListener();
     }
 
@@ -449,6 +526,10 @@ public class StockDetailFragment extends Fragment {
         @Override
         public void refreshContent(Entry e, Highlight highlight) {
             int xPosition = (int) e.getX();
+            /**
+             * See {@link DateAxisValueFormatter#getFormattedValue(float, AxisBase)}
+             * for details regarding the index computation
+             */
             xPosition -= (dates.size() - datesToShow.size());
             float stockQuote = e.getY();
             textViewMarker.setText(simpleDateFormat.format(datesToShow.get(xPosition)) + ", $" + stockQuote);
@@ -519,7 +600,7 @@ public class StockDetailFragment extends Fragment {
         volume /= Constants.ONE_MILLION;
         stockKeyStats.set(
                 Constants.POSITION_VOLUME,
-                new DecimalFormat("##.####M").format(volume)
+                new DecimalFormat("##.##M").format(volume)
         );
 
         // Display market cap as 'y billion'
@@ -527,7 +608,7 @@ public class StockDetailFragment extends Fragment {
         marketCap /= Constants.ONE_BILLION;
         stockKeyStats.set(
                 Constants.POSITION_MARKET_CAP,
-                new DecimalFormat("##.####B").format(marketCap)
+                new DecimalFormat("##.##B").format(marketCap)
         );
 
         log("KeyStats: " + stockKeyStats.toString());
