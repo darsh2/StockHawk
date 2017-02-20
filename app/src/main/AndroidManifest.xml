@@ -24,7 +24,7 @@
 
         <activity
             android:name=".ui.activity.StockDetailActivity"
-            android:theme="@style/StockDetailActivityTheme">
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />

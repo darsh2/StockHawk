@@ -1,6 +1,7 @@
 package com.udacity.stockhawk.ui.adapter;
 
 import android.content.Context;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -74,9 +75,9 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         float percentageChange = stockQuotes.get(position).percentageChange;
 
         if (rawAbsoluteChange > 0) {
-            holder.change.setBackgroundResource(R.drawable.percent_change_pill_green);
+            holder.change.setTextColor(ContextCompat.getColor(context, R.color.material_green_700));
         } else {
-            holder.change.setBackgroundResource(R.drawable.percent_change_pill_red);
+            holder.change.setTextColor(ContextCompat.getColor(context, R.color.material_red_700));
         }
 
         String change = dollarFormatWithPlus.format(rawAbsoluteChange);

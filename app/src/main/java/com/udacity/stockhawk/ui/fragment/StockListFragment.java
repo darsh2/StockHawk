@@ -10,8 +10,10 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
+import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -59,6 +61,9 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     public static final String TAG = StockListFragment.class.getName();
 
+    @BindView(R.id.toolbar)
+    Toolbar toolbar;
+
     @BindView(R.id.swipe_refresh)
     SwipeRefreshLayout swipeRefreshLayout;
 
@@ -83,10 +88,17 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         View view = inflater.inflate(R.layout.fragment_stocks_list, container, true);
         ButterKnife.bind(this, view);
 
+        toolbar.setTitle(getString(R.string.app_name));
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).setSupportActionBar(toolbar);
+            ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        }
+
         stockQuotes = new ArrayList<>();
         adapter = new StockAdapter(getContext(), this);
         stockRecyclerView.setAdapter(adapter);
         stockRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+        stockRecyclerView.addItemDecoration(new DividerItemDecoration(stockRecyclerView.getContext(), DividerItemDecoration.VERTICAL));
 
         swipeRefreshLayout.setOnRefreshListener(this);
         swipeRefreshLayout.setRefreshing(true);
