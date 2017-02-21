@@ -2,6 +2,7 @@ package com.udacity.stockhawk.widget;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
@@ -98,9 +99,14 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public RemoteViews getViewAt(int position) {
-        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.list_item_quote);
+        RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.list_item_widget_stock_quote);
         remoteViews.setTextViewText(R.id.symbol, widgetItems.get(position).symbol);
         remoteViews.setTextViewText(R.id.price, widgetItems.get(position).price);
+        int colorId = R.color.material_green_700;
+        if (widgetItems.get(position).percentageChange.charAt(0) == '-') {
+            colorId = R.color.material_red_700;
+        }
+        remoteViews.setTextColor(R.id.change, ContextCompat.getColor(context.getApplicationContext(), colorId));
         remoteViews.setTextViewText(R.id.change, widgetItems.get(position).percentageChange);
         return remoteViews;
     }

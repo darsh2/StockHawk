@@ -11,7 +11,6 @@ import android.widget.RemoteViews;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.activity.MainActivity;
-import com.udacity.stockhawk.util.Constants;
 
 /**
  * Created by darshan on 11/2/17.
@@ -23,6 +22,10 @@ public class StockQuoteWidgetProvider extends AppWidgetProvider {
         Log.i("SH-SQWP", "onReceive");
         Log.i("SH-SQWP", "Action: " + intent.getAction());
         super.onReceive(context, intent);
+        if (!intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
+            return;
+        }
+
         AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
         int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
                 new ComponentName(context, context.getPackageName()));
@@ -34,6 +37,7 @@ public class StockQuoteWidgetProvider extends AppWidgetProvider {
         Log.i("SH-SQWP", "onUpdate");
         for (int i = 0, numWidgets = appWidgetIds.length; i < numWidgets; i++) {
             RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.stock_quote_widget_layout);
+            remoteViews.setEmptyView(R.id.list_view_stock_quotes, R.id.text_view_empty_widget);
 
             Intent adapterIntent = new Intent(context, StockQuoteWidgetService.class);
             adapterIntent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetIds[i]);
