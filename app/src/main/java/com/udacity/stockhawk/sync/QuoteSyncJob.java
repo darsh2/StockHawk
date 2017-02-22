@@ -17,6 +17,7 @@ import com.udacity.stockhawk.sync.event.ErrorEvent;
 
 import org.greenrobot.eventbus.EventBus;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -58,6 +59,7 @@ public final class QuoteSyncJob {
         Calendar to = Calendar.getInstance();
         from.add(Calendar.YEAR, -YEARS_OF_HISTORY);
 
+        String currentSymbol = null;
         try {
             Set<String> stockPref = PrefUtils.getStocks(context);
             Set<String> stockCopy = new HashSet<>();
@@ -80,6 +82,7 @@ public final class QuoteSyncJob {
 
             while (iterator.hasNext()) {
                 String symbol = iterator.next();
+                currentSymbol = symbol;
 
                 Stock stock = quotes.get(symbol);
                 StockQuote quote = stock.getQuote();
@@ -134,14 +137,19 @@ public final class QuoteSyncJob {
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
-        } catch (NullPointerException nullPointerException) {
+        } catch (FileNotFoundException fileNotFoundException) {
+            /*
+            Earlier adding an invalid stock symbol threw NullPointerException
+            but now it throws FileNotFoundException.
+             */
             log("Stock symbol not found");
-            nullPointerException.printStackTrace();
-            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.SYMBOL_NOT_FOUND_ERROR));
+            fileNotFoundException.printStackTrace();
+            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.SYMBOL_NOT_FOUND_ERROR, currentSymbol));
+
         } catch (IOException ioException) {
             log("IOException: Error fetching stock quotes");
             ioException.printStackTrace();
-            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR));
+            EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR, null));
 
         }
     }

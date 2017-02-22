@@ -30,10 +30,11 @@
     <string name="toast_no_connectivity">Will refresh when network available.</string>
 
     <string name="stock_symbol_constraint" translatable="false">Stock symbol must consist of one or more alphabetic characters.</string>
+    <string name="stock_symbol_exists" translatable="false">%s already exists.</string>
     <string name="internet_connectivity_unavailable" translatable="false">Internet connectivity unavailable. Please try again in some time.</string>
 
     <string name="error_network">Something went wrong while fetching stocks. Please try again in some time.</string>
-    <string name="error_stock_symbol_not_found" translatable="false">Stock symbol not found. Please enter a valid symbol.</string>
+    <string name="error_stock_symbol_not_found" translatable="false">%s found. Please enter a valid symbol.</string>
 
     <string name="toast_action_ok" translatable="false">OK</string>
 

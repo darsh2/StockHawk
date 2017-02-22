@@ -181,8 +181,15 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             return;
         }
 
+        for (int i = 0, l = stockQuotes.size(); i < l; i++) {
+            if (symbol.equals(stockQuotes.get(i).symbol)) {
+                showSnackbar(String.format(getString(R.string.stock_symbol_exists), symbol));
+                return;
+            }
+        }
+
         if (!networkUp()) {
-            showSnackbar(getString(R.string.toast_stock_added_no_connectivity));
+            showSnackbar(String.format(getString(R.string.toast_stock_added_no_connectivity), symbol));
         } else {
             swipeRefreshLayout.setRefreshing(true);
         }
@@ -233,7 +240,12 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
             showSnackbar(getString(R.string.error_network));
         } else if (event.getCode() == ErrorEvent.SYMBOL_NOT_FOUND_ERROR) {
-            showSnackbar(getString(R.string.error_stock_symbol_not_found));
+            String symbol = "Stock symbol";
+            if (event.getSymbol() != null) {
+                symbol = event.getSymbol();
+                PrefUtils.removeStock(getContext(), symbol);
+            }
+            showSnackbar(String.format(getString(R.string.error_stock_symbol_not_found), symbol));
         }
     }
 

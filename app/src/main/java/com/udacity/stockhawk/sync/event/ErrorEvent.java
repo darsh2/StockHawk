@@ -1,6 +1,7 @@
 package com.udacity.stockhawk.sync.event;
 
 import android.support.annotation.IntDef;
+import android.support.annotation.Nullable;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -18,13 +19,19 @@ public class ErrorEvent {
     public static final int SYMBOL_NOT_FOUND_ERROR = 101;
 
     private final int errorCode;
+    private final String symbol;
 
-    public ErrorEvent(int errorCode) {
+    public ErrorEvent(int errorCode, String symbol) {
         this.errorCode = errorCode;
+        this.symbol = symbol;
     }
 
     @ErrorCode
     public int getCode() {
         return errorCode;
+    }
+
+    public @Nullable String getSymbol() {
+        return symbol;
     }
 }
