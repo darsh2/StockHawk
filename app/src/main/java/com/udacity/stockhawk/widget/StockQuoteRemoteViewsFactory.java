@@ -78,7 +78,7 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
         while (cursor.moveToNext()) {
             String symbol = cursor.getString(cursor.getColumnIndex(projection[0]));
             String price = dollarFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[1])));
-            String percentageChange = percentageFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[2])));
+            String percentageChange = percentageFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[2])) / 100.0);
             widgetItems.add(new StockQuoteWidgetItem(symbol, price, percentageChange));
         }
         cursor.close();
