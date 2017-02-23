@@ -29,7 +29,11 @@ import com.github.mikephil.charting.highlight.Highlight;
 import com.github.mikephil.charting.utils.MPPointF;
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
+import com.udacity.stockhawk.sync.event.DataUpdatedEvent;
 import com.udacity.stockhawk.util.Constants;
+
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.math.BigDecimal;
 import java.text.DecimalFormat;
@@ -192,7 +196,8 @@ public class StockDetailFragment extends Fragment {
         textViewStockPrice.setText(stockPrice);
 
         disposables = new CompositeDisposable();
-        loadStockKeyStats();
+
+        loadStockKeyStats(false);
         initChartView();
 
         return view;
@@ -204,7 +209,7 @@ public class StockDetailFragment extends Fragment {
         styleDateAxis();
         styleStockCloseAxis();
         styleDataSet();
-        loadHistoricalStockQuotes();
+        loadHistoricalStockQuotes(false);
     }
 
     private void styleLineChart() {
@@ -344,10 +349,18 @@ public class StockDetailFragment extends Fragment {
         lineChart.setData(lineData);
     }
 
-    private void loadHistoricalStockQuotes() {
+    /**
+     * Fetch historical stock quotes from db and load the entries into the chart.
+     * @param isDataUpdatedEvent Flag that indicates whether the {@link #stockQuotes stockQuotes} should
+     *                           be forcefully loaded from db or not. If it is a case of restoring state,
+     *                           then no point reloading from db. However if it is the first call to loading
+     *                           stock quotes or it is called due to a {@link DataUpdatedEvent} then load
+     *                           from db.
+     */
+    private void loadHistoricalStockQuotes(boolean isDataUpdatedEvent) {
         log("loadHistoricalStockQuotes");
 
-        if (stockQuotes != null) {
+        if (!isDataUpdatedEvent && stockQuotes != null) {
             drawGraph();
             return;
         }
@@ -400,8 +413,13 @@ public class StockDetailFragment extends Fragment {
         String[] historicalQuotes = history.split("\n");
         int numHistoricalQuotes = historicalQuotes.length;
 
-        dates = new ArrayList<>(numHistoricalQuotes);
-        stockQuotes = new ArrayList<>(numHistoricalQuotes);
+        if (dates != null) {
+            dates.clear();
+            stockQuotes.clear();
+        } else {
+            dates = new ArrayList<>(numHistoricalQuotes);
+            stockQuotes = new ArrayList<>(numHistoricalQuotes);
+        }
 
         // The stock quotes are in descending order of dates.
         for (int i = numHistoricalQuotes - 1, entryX = 0; i >= 0; i--) {
@@ -564,10 +582,19 @@ public class StockDetailFragment extends Fragment {
         }
     }
 
-    private void loadStockKeyStats() {
+
+    /**
+     * Fetch stock key stats from db and update stock key stats view.
+     * @param isDataUpdatedEvent Flag that indicates whether the {@link #stockKeyStats stockKeyStats} should
+     *                           be forcefully loaded from db or not. If it is a case of restoring state,
+     *                           then no point reloading from db. However if it is the first call to loading
+     *                           stock quotes or it is called due to a {@link DataUpdatedEvent} then load
+     *                           from db.
+     */
+    private void loadStockKeyStats(boolean isDataUpdatedEvent) {
         log("loadStockKeyStats");
 
-        if (stockKeyStats != null) {
+        if (!isDataUpdatedEvent && stockKeyStats != null) {
             updateKeyStatsView();
             return;
         }
@@ -615,8 +642,12 @@ public class StockDetailFragment extends Fragment {
         }
 
         cursor.moveToNext();
-        stockKeyStats = new ArrayList<>(8);
-        for (int i = 0; i < 8; i++) {
+        if (stockKeyStats != null) {
+            stockKeyStats.clear();
+        } else {
+            stockKeyStats = new ArrayList<>(Constants.KEY_STATS_COLUMN_NAMES.length);
+        }
+        for (int i = 0, l = Constants.KEY_STATS_COLUMN_NAMES.length; i < l; i++) {
             stockKeyStats.add(String.valueOf(
                     cursor.getFloat(cursor.getColumnIndex(Constants.KEY_STATS_COLUMN_NAMES[i]))
             ));
@@ -667,6 +698,14 @@ public class StockDetailFragment extends Fragment {
         textViewYearHigh.setText(String.format(
                 getString(R.string.key_stats_year_high), stockKeyStats.get(Constants.POSITION_YEAR_HIGH)
         ));
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onDataUpdatedEvent(DataUpdatedEvent event) {
+        if (event.timeStamp != -1) {
+            loadHistoricalStockQuotes(true);
+            loadStockKeyStats(true);
+        }
     }
 
     @Override
