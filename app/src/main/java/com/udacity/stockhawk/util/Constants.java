@@ -7,11 +7,18 @@ import com.udacity.stockhawk.data.Contract;
  */
 
 public class Constants {
-    public static final String BUNDLE_STOCK_QUOTES = "StockQuotes";
-
     public static final String INTENT_EXTRA_STOCK_SYMBOL = "StockSymbol";
     public static final String INTENT_EXTRA_STOCK_NAME = "StockName";
     public static final String INTENT_EXTRA_STOCK_PRICE = "StockPrice";
+
+    public static final String BUNDLE_STOCK_NAME = "StockName";
+    public static final String BUNDLE_STOCK_SYMBOL = "StockSymbol";
+    public static final String BUNDLE_STOCK_PRICE = "StockPrice";
+    public static final String BUNDLE_STOCK_QUOTE_DATES = "Dates";
+    public static final String BUNDLE_STOCK_QUOTES = "StockQuotes";
+    public static final String BUNDLE_TAB_SELECTED_INDEX = "TabSelectedIndex";
+    public static final String BUNDLE_STOCK_QUOTES_SINCE = "StockQuotesSince";
+    public static final String BUNDLE_STOCK_KEY_STATS = "StockKeyStats";
 
     public static final String[] KEY_STATS_COLUMN_NAMES = {
             Contract.KeyStats.COLUMN_DAY_LOW,

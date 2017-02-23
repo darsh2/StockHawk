@@ -124,6 +124,22 @@ public class StockDetailFragment extends Fragment {
     private ArrayList<Entry> stockQuotes;
 
     /**
+     * <p>Index of the tab that is currently selected (Shucks, such a helpful
+     * comment). On restoring state, the time after which stock quotes
+     * should be shown is known but it may not always be 2 years. Hence keep
+     * track of the tab selected index to appropriately update UI.
+     *
+     * <p>By default always show stock quotes for two years and is hence set
+     * to 3 as that is the tab index for 2 years.
+     */
+    private int tabSelectedIndex = 3;
+
+    /**
+     * Indicates the time after which stock quotes should be shown.
+     */
+    private long stockQuotesSince = Long.MIN_VALUE;
+
+    /**
      * The actual dates to consider for adding to
      * the chart based on the user selected time period.
      */
@@ -161,6 +177,8 @@ public class StockDetailFragment extends Fragment {
         log("onCreateView");
         View view = inflater.inflate(R.layout.fragment_stock_detail, container, false);
         ButterKnife.bind(this, view);
+
+        restoreInstanceState(savedInstanceState);
 
         toolbar.setTitle(stockName);
         toolbar.setNavigationOnClickListener(new View.OnClickListener() {
@@ -327,6 +345,13 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void loadHistoricalStockQuotes() {
+        log("loadHistoricalStockQuotes");
+
+        if (stockQuotes != null) {
+            drawGraph();
+            return;
+        }
+
         Single<Boolean> stockQuotesSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -384,14 +409,14 @@ public class StockDetailFragment extends Fragment {
             stockQuotes.add(new Entry(entryX++, (new BigDecimal(entry[1])).floatValue()));
             dates.add(Long.parseLong(entry[0]));
         }
-        return getStocksFromDate(Long.MIN_VALUE);
+        return true;
     }
 
     /**
-     * Stores all the dates and stock quotes <strong>from</strong>
-     * the specified date.
+     * Stores all the dates and stock quotes after the time specified
+     * in {@link #stockQuotesSince stockQuotesSince}.
      */
-    private boolean getStocksFromDate(long from) {
+    private void getStocksFromDate() {
         if (datesToShow == null) {
             datesToShow = new ArrayList<>();
             stockQuotesToShow = new ArrayList<>();
@@ -401,18 +426,17 @@ public class StockDetailFragment extends Fragment {
         }
 
         for (int i = 0, l = dates.size(); i < l; i++) {
-            if (dates.get(i) > from) {
+            if (dates.get(i) > stockQuotesSince) {
                 datesToShow.add(dates.get(i));
                 stockQuotesToShow.add(stockQuotes.get(i));
             }
         }
-        Log.i("ABCDE", "O: " + dates.size() + ", " + stockQuotes.size());
-        Log.i("ABCDE", "M: " + datesToShow.size() + ", " + stockQuotesToShow.size());
-        return true;
     }
 
     private void drawGraph() {
         log("drawGraph");
+        getStocksFromDate();
+
         // Clears all entries in the arrayList containing chart entries
         lineDataSet.clear();
         // Clears the dataSets list
@@ -447,21 +471,19 @@ public class StockDetailFragment extends Fragment {
             return;
         }
 
-        /*
-        Initially show chart of stock prices for
-        two years. Hence select tab four which
-        says 2 years.
-         */
-        if (tabLayout.getTabAt(3) != null) {
-            tabLayout.getTabAt(3).select();
+        if (tabLayout.getTabAt(tabSelectedIndex) != null) {
+            tabLayout.getTabAt(tabSelectedIndex).select();
         }
 
         onTabSelectedListener = new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                tabSelectedIndex = tab.getPosition();
+
                 int months;
                 Calendar calendar = Calendar.getInstance();
-                switch (tab.getPosition()) {
+
+                switch (tabSelectedIndex) {
                     case 0: {
                         months = -1;
                         lineChart.getXAxis().setLabelCount(2, false);
@@ -487,6 +509,7 @@ public class StockDetailFragment extends Fragment {
                     }
                 }
                 calendar.add(Calendar.MONTH, months);
+                stockQuotesSince = calendar.getTimeInMillis();
 
                 /*
                 Clear line chart marker for a particular entry as
@@ -496,7 +519,6 @@ public class StockDetailFragment extends Fragment {
                 textViewMarker.setText("");
                 lineChart.setSelected(false);
 
-                getStocksFromDate(calendar.getTimeInMillis());
                 drawGraph();
             }
 
@@ -544,6 +566,12 @@ public class StockDetailFragment extends Fragment {
 
     private void loadStockKeyStats() {
         log("loadStockKeyStats");
+
+        if (stockKeyStats != null) {
+            updateKeyStatsView();
+            return;
+        }
+
         Single<Boolean> stockKeyStatsSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -639,6 +667,49 @@ public class StockDetailFragment extends Fragment {
         textViewYearHigh.setText(String.format(
                 getString(R.string.key_stats_year_high), stockKeyStats.get(Constants.POSITION_YEAR_HIGH)
         ));
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        outState.putString(Constants.BUNDLE_STOCK_NAME, stockName);
+        outState.putString(Constants.BUNDLE_STOCK_SYMBOL, stockSymbol);
+        outState.putString(Constants.BUNDLE_STOCK_PRICE, stockPrice);
+        long[] datesArray = new long[dates.size()];
+        for (int i = 0, l = dates.size(); i < l; i++) {
+            datesArray[i] = dates.get(i);
+        }
+        outState.putLongArray(Constants.BUNDLE_STOCK_QUOTE_DATES, datesArray);
+        outState.putParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES, stockQuotes);
+        outState.putInt(Constants.BUNDLE_TAB_SELECTED_INDEX, tabSelectedIndex);
+        outState.putLong(Constants.BUNDLE_STOCK_QUOTES_SINCE, stockQuotesSince);
+        outState.putStringArrayList(Constants.BUNDLE_STOCK_KEY_STATS, stockKeyStats);
+    }
+
+    private void restoreInstanceState(Bundle savedInstanceState) {
+        log("restoreInstanceState");
+        if (savedInstanceState == null) {
+            return;
+        }
+
+        log("Actually worked");
+
+        if (stockName != null) {
+            stockName = savedInstanceState.getString(Constants.BUNDLE_STOCK_NAME);
+            stockSymbol = savedInstanceState.getString(Constants.BUNDLE_STOCK_SYMBOL);
+            stockPrice = savedInstanceState.getString(Constants.BUNDLE_STOCK_PRICE);
+        }
+
+        long[] datesArray = savedInstanceState.getLongArray(Constants.BUNDLE_STOCK_QUOTE_DATES);
+        if (datesArray != null) {
+            dates = new ArrayList<>(datesArray.length);
+            for (int i = 0, l = datesArray.length; i < l; i++) {
+                dates.add(datesArray[i]);
+            }
+        }
+        stockQuotes = savedInstanceState.getParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES);
+        tabSelectedIndex = savedInstanceState.getInt(Constants.BUNDLE_TAB_SELECTED_INDEX, 3);
+        stockQuotesSince = savedInstanceState.getLong(Constants.BUNDLE_STOCK_QUOTES_SINCE, Long.MIN_VALUE);
+        stockKeyStats = savedInstanceState.getStringArrayList(Constants.BUNDLE_STOCK_KEY_STATS);
     }
 
     @Override
