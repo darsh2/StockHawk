@@ -56,4 +56,7 @@
     <string name="toast_error_no_internet_connection" translatable="false">No internet connection. Loading stock quotes saved in app.</string>
 
     <string name="stock_quote_widget_empty_text" translatable="false">No stocks added!</string>
+
+    <string name="stock_quote_delete_successful" translatable="false">%s successful deleted.</string>
+    <string name="stock_quote_delete_unsuccessful" translatable="false">Unable to delete %s. Please try again.</string>
 </resources>

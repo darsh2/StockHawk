@@ -1,7 +1,10 @@
 package com.udacity.stockhawk.ui.fragment;
 
 import android.app.Activity;
+import android.appwidget.AppWidgetManager;
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -35,6 +38,7 @@ import com.udacity.stockhawk.ui.activity.MainActivity;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
 import com.udacity.stockhawk.util.Constants;
+import com.udacity.stockhawk.widget.StockQuoteWidgetProvider;
 
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
@@ -113,9 +117,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                String symbol = adapter.getSymbolAtPosition(viewHolder.getAdapterPosition());
-                PrefUtils.removeStock(getActivity(), symbol);
-                getActivity().getContentResolver().delete(Contract.Quote.makeUriForStock(symbol), null, null);
+                deleteStockQuote(stockQuotes.get(viewHolder.getAdapterPosition()).symbol);
             }
         });
         itemTouchHelper.attachToRecyclerView(stockRecyclerView);
@@ -375,6 +377,72 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         if (activity instanceof MainActivity) {
             ((MainActivity) activity).onStockClick(symbol, name, price);
         }
+    }
+
+    private void deleteStockQuote(final String symbol) {
+        log("deleteStockQuote");
+        Single<Boolean> deleteStockQuoteSingle = Single.fromCallable(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return deleteStockQuoteFromDb(symbol);
+            }
+        });
+        deleteStockQuoteSingle
+                .subscribeOn(Schedulers.newThread())
+                .observeOn(AndroidSchedulers.mainThread());
+        DisposableSingleObserver<Boolean> disposableSingleObserver = deleteStockQuoteSingle
+                .subscribeWith(new DisposableSingleObserver<Boolean>() {
+                    @Override
+                    public void onSuccess(Boolean value) {
+                        log("deleteStockQuoteSingleObserver - onSuccess");
+                        onDeleteSuccessful(symbol);
+                    }
+
+                    @Override
+                    public void onError(Throwable e) {
+                        log("deleteStockQuoteSingleObserver - onError");
+                        log(e.getMessage());
+                        e.printStackTrace();
+                        showSnackbar(String.format(getString(R.string.stock_quote_delete_unsuccessful), symbol));
+                    }
+                });
+        disposables.add(disposableSingleObserver);
+    }
+
+    private boolean deleteStockQuoteFromDb(String symbol) {
+        log("deleteStockQuoteFromDb");
+        int numRowsDeleted = getContext().getContentResolver()
+                .delete(Contract.Quote.makeUriForStock(symbol), null, null);
+        return numRowsDeleted == 1;
+    }
+
+    private void onDeleteSuccessful(String symbol) {
+        PrefUtils.removeStock(getContext(), symbol);
+
+        for (int i = 0, l = stockQuotes.size(); i < l; i++) {
+            if (stockQuotes.get(i).symbol.equals(symbol)) {
+                stockQuotes.remove(i);
+                break;
+            }
+        }
+        updateAdapterView();
+        showSnackbar(String.format(getString(R.string.stock_quote_delete_successful), symbol));
+
+        updateAppWidget();
+    }
+
+    private void updateAppWidget() {
+        log("updateAppWidget");
+        Context context = getContext();
+        Intent intent = new Intent(context, StockQuoteWidgetProvider.class);
+        intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
+        int[] widgetIds = AppWidgetManager.getInstance(context)
+                .getAppWidgetIds(new ComponentName(
+                        context,
+                        StockQuoteWidgetProvider.class
+                ));
+        intent.putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, widgetIds);
+        context.sendBroadcast(intent);
     }
 
     @Override
