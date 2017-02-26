@@ -8,7 +8,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.util.Log;
+
+import com.udacity.stockhawk.util.DebugLog;
 
 public class StockProvider extends ContentProvider {
 
@@ -32,14 +33,6 @@ public class StockProvider extends ContentProvider {
         return matcher;
     }
 
-    private static final String tag = "CL-SP";
-    private static final boolean DEBUG = true;
-    private static final void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
-        }
-    }
-
     @Override
     public boolean onCreate() {
         dbHelper = new DbHelper(getContext());
@@ -49,13 +42,15 @@ public class StockProvider extends ContentProvider {
     @Nullable
     @Override
     public Cursor query(@NonNull Uri uri, String[] projection, String selection, String[] selectionArgs, String sortOrder) {
-        log("query :: uri " + uri.toString());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Uri " + uri.toString());
+
         Cursor returnCursor;
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         switch (uriMatcher.match(uri)) {
             case QUOTE: {
-                log("QUOTE");
+                DebugLog.logMessage("QUOTE");
                 returnCursor = db.query(
                         Contract.Quote.TABLE_NAME,
                         projection,
@@ -69,7 +64,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case QUOTE_FOR_SYMBOL: {
-                log("QUOTE_FOR_SYMBOL");
+                DebugLog.logMessage("QUOTE_FOR_SYMBOL");
                 returnCursor = db.query(
                         Contract.Quote.TABLE_NAME,
                         projection,
@@ -83,7 +78,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS: {
-                log("KEY_STATS");
+                DebugLog.logMessage("KEY_STATS");
                 returnCursor = db.query(
                         Contract.KeyStats.TABLE_NAME,
                         projection,
@@ -97,7 +92,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS_FOR_SYMBOL: {
-                log("KEY_STATS_FOR_SYMBOL");
+                DebugLog.logMessage("KEY_STATS_FOR_SYMBOL");
                 returnCursor = db.query(
                         Contract.KeyStats.TABLE_NAME,
                         projection,
@@ -128,13 +123,14 @@ public class StockProvider extends ContentProvider {
     @Nullable
     @Override
     public Uri insert(@NonNull Uri uri, ContentValues values) {
-        log("insert :: uri " + uri.toString());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Uri " + uri.toString());
         SQLiteDatabase db = dbHelper.getWritableDatabase();
         Uri returnUri;
 
         switch (uriMatcher.match(uri)) {
             case QUOTE: {
-                log("QUOTE");
+                DebugLog.logMessage("QUOTE");
                 db.insert(
                         Contract.Quote.TABLE_NAME,
                         null,
@@ -145,7 +141,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS: {
-                log("KEY_STATS");
+                DebugLog.logMessage("KEY_STATS");
                 db.insert(
                         Contract.KeyStats.TABLE_NAME,
                         null,
@@ -166,7 +162,8 @@ public class StockProvider extends ContentProvider {
 
     @Override
     public int delete(@NonNull Uri uri, String selection, String[] selectionArgs) {
-        log("delete :: uri " + uri.toString());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Uri " + uri.toString());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
         int rowsDeleted;
 
@@ -175,7 +172,7 @@ public class StockProvider extends ContentProvider {
         }
         switch (uriMatcher.match(uri)) {
             case QUOTE: {
-                log("QUOTE");
+                DebugLog.logMessage("QUOTE");
                 rowsDeleted = db.delete(
                         Contract.Quote.TABLE_NAME,
                         selection,
@@ -185,7 +182,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case QUOTE_FOR_SYMBOL: {
-                log("QUOTE_FOR_SYMBOL");
+                DebugLog.logMessage("QUOTE_FOR_SYMBOL");
                 String symbol = Contract.Quote.getStockFromUri(uri);
                 rowsDeleted = db.delete(
                         Contract.Quote.TABLE_NAME,
@@ -196,7 +193,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS: {
-                log("KEY_STATS");
+                DebugLog.logMessage("KEY_STATS");
                 rowsDeleted = db.delete(
                         Contract.KeyStats.TABLE_NAME,
                         selection,
@@ -206,7 +203,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS_FOR_SYMBOL: {
-                log("KEY_STATS_FOR_SYMBOL");
+                DebugLog.logMessage("KEY_STATS_FOR_SYMBOL");
                 String symbol = Contract.KeyStats.getStockFromUri(uri);
                 rowsDeleted = db.delete(
                         Contract.KeyStats.TABLE_NAME,
@@ -234,12 +231,13 @@ public class StockProvider extends ContentProvider {
 
     @Override
     public int bulkInsert(@NonNull Uri uri, @NonNull ContentValues[] values) {
-        log("bulkInsert :: uri " + uri.toString());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Uri " + uri.toString());
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         switch (uriMatcher.match(uri)) {
             case QUOTE: {
-                log("QUOTE");
+                DebugLog.logMessage("QUOTE");
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
@@ -265,7 +263,7 @@ public class StockProvider extends ContentProvider {
             }
 
             case KEY_STATS: {
-                log("KEY_STATS");
+                DebugLog.logMessage("KEY_STATS");
                 db.beginTransaction();
                 int returnCount = 0;
                 try {
@@ -298,7 +296,7 @@ public class StockProvider extends ContentProvider {
 
     @Override
     public void shutdown() {
-        log("shutdown");
+        DebugLog.logMethod();
         dbHelper.close();
         super.shutdown();
     }

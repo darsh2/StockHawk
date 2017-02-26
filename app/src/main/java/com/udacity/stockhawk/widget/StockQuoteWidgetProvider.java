@@ -7,11 +7,11 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.support.v4.app.TaskStackBuilder;
-import android.util.Log;
 import android.widget.RemoteViews;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.activity.StockDetailActivity;
+import com.udacity.stockhawk.util.DebugLog;
 
 /**
  * Created by darshan on 11/2/17.
@@ -20,8 +20,8 @@ import com.udacity.stockhawk.ui.activity.StockDetailActivity;
 public class StockQuoteWidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(Context context, Intent intent) {
-        Log.i("DL-SQWP", "onReceive");
-        Log.i("DL-SQWP", "Action: " + intent.getAction());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Action: " + intent.getAction());
         super.onReceive(context, intent);
         if (!intent.getAction().equals(AppWidgetManager.ACTION_APPWIDGET_UPDATE)) {
             return;
@@ -35,7 +35,7 @@ public class StockQuoteWidgetProvider extends AppWidgetProvider {
 
     @Override
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        Log.i("DL-SQWP", "onUpdate");
+        DebugLog.logMethod();
         for (int i = 0, numWidgets = appWidgetIds.length; i < numWidgets; i++) {
             RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.stock_quote_widget_layout);
             remoteViews.setEmptyView(R.id.list_view_stock_quotes, R.id.text_view_empty_widget);

@@ -56,10 +56,6 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         notifyDataSetChanged();
     }
 
-    public String getSymbolAtPosition(int position) {
-        return stockQuotes.get(position).symbol;
-    }
-
     @Override
     public StockViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View item = LayoutInflater.from(context).inflate(R.layout.list_item_quote, parent, false);

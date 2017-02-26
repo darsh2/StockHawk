@@ -4,27 +4,19 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import com.udacity.stockhawk.util.Constants;
+import com.udacity.stockhawk.util.DebugLog;
 
 public class StockListActivity extends AppCompatActivity {
-    private static final String tag = "DL-MA";
-    private static final boolean DEBUG = false;
-    private static void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
-        }
-    }
-
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_stock_list);
 
-        log("onCreate");
+        DebugLog.logMethod();
 
         StockListFragment stockListFragment = null;
         if (getSupportFragmentManager() != null) {
@@ -50,17 +42,5 @@ public class StockListActivity extends AppCompatActivity {
         Intent intent = new Intent(this, StockDetailActivity.class);
         intent.putExtras(extras);
         startActivity(intent);
-    }
-
-    @Override
-    protected void onStart() {
-        super.onStart();
-        log("onStart");
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-        log("onStop");
     }
 }

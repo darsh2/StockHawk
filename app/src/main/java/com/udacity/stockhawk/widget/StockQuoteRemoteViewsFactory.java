@@ -5,13 +5,13 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.util.Constants;
+import com.udacity.stockhawk.util.DebugLog;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -40,12 +40,8 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
     private DecimalFormat dollarFormat;
     private DecimalFormat percentageFormat;
 
-    private static void log(String message) {
-        Log.i("SH-SQRVF", message);
-    }
-
     StockQuoteRemoteViewsFactory(Context context) {
-        log("StockQuoteRemoteViewsFactory");
+        DebugLog.logMessage("StockQuoteRemoteViewsFactory");
         this.context = context;
 
         dollarFormat = (DecimalFormat) NumberFormat.getCurrencyInstance(Locale.US);
@@ -58,12 +54,12 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onCreate() {
-        log("onCreate");
+        DebugLog.logMethod();
     }
 
     @Override
     public void onDataSetChanged() {
-        log("onDataSetChanged");
+        DebugLog.logMethod();
         Cursor cursor = context.getContentResolver()
                 .query(
                         Contract.Quote.URI,
@@ -94,7 +90,7 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     @Override
     public void onDestroy() {
-        log("onDestroy");
+        DebugLog.logMethod();
     }
 
     @Override

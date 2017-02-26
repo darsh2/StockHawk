@@ -1,8 +1,9 @@
 package com.udacity.stockhawk.widget;
 
 import android.content.Intent;
-import android.util.Log;
 import android.widget.RemoteViewsService;
+
+import com.udacity.stockhawk.util.DebugLog;
 
 /**
  * Created by darshan on 11/2/17.
@@ -11,7 +12,7 @@ import android.widget.RemoteViewsService;
 public class StockQuoteWidgetService extends RemoteViewsService {
     @Override
     public RemoteViewsFactory onGetViewFactory(Intent intent) {
-        Log.i("GS-SQWS", "onGetViewFactory");
+        DebugLog.logMethod();
         return new StockQuoteRemoteViewsFactory(getApplicationContext());
     }
 }

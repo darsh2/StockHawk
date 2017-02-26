@@ -18,7 +18,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.v7.widget.helper.ItemTouchHelper;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -38,6 +37,7 @@ import com.udacity.stockhawk.ui.activity.StockListActivity;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
 import com.udacity.stockhawk.util.Constants;
+import com.udacity.stockhawk.util.DebugLog;
 import com.udacity.stockhawk.widget.StockQuoteWidgetProvider;
 
 import org.greenrobot.eventbus.EventBus;
@@ -87,8 +87,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        log("onCreateView");
-        log("Process: " + android.os.Process.myPid());
+        DebugLog.logMethod();
         View view = inflater.inflate(R.layout.fragment_stock_list, container, true);
         ButterKnife.bind(this, view);
 
@@ -131,7 +130,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
      * Starts the periodic and one off job to fetch stock quotes.
      */
     public void initialize(Bundle savedInstanceState) {
-        log("initialize");
+        DebugLog.logMethod();
         if (savedInstanceState != null
                 && savedInstanceState.getParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES) != null) {
             swipeRefreshLayout.setRefreshing(false);
@@ -151,7 +150,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Override
     public void onRefresh() {
-        log("onRefresh");
+        DebugLog.logMethod();
         error.setVisibility(View.GONE);
         if (!networkUp()) {
             loadStockQuotes();
@@ -161,7 +160,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private boolean networkUp() {
-        log("networkUp");
+        DebugLog.logMethod();
         ConnectivityManager cm =
                 (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
@@ -237,7 +236,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onErrorEvent(ErrorEvent event) {
-        log("onErrorEvent");
+        DebugLog.logMessage("onErrorEvent");
         swipeRefreshLayout.setRefreshing(false);
         if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
             showSnackbar(getString(R.string.error_network));
@@ -270,18 +269,9 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             Contract.Quote.COLUMN_PERCENTAGE_CHANGE
     };
 
-
-    private static final String tag = "DL-SLF";
-    private static final boolean DEBUG = true;
-    private static void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
-        }
-    }
-
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdatedEvent(DataUpdatedEvent event) {
-        log("onDataUpdatedEvent");
+        DebugLog.logMethod();
         if (event.timeStamp == -1) {
             return;
         }
@@ -293,11 +283,11 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private void loadStockQuotes() {
-        log("loadStockQuotes");
+        DebugLog.logMethod();
         Single<Boolean> stockQuotesSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                log("stockQuotesSingle - call");
+                DebugLog.logMessage("stockQuotesSingle - call");
                 return retrieveStockQuotesFromDb();
             }
         });
@@ -308,14 +298,14 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                 .subscribeWith(new DisposableSingleObserver<Boolean>() {
                     @Override
                     public void onSuccess(Boolean value) {
-                        log("stockQuotesSingleObserver - onSuccess");
+                        DebugLog.logMessage("stockQuotesSingleObserver - onSuccess");
                         updateRecyclerView();
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log("stockQuotesSingleObserver - onError");
-                        log(e.toString() + "\n\n" + e.getMessage());
+                        DebugLog.logMessage("stockQuotesSingleObserver - onError");
+                        DebugLog.logMessage(e.toString() + "\n\n" + e.getMessage());
                         e.printStackTrace();
                     }
                 });
@@ -323,7 +313,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private boolean retrieveStockQuotesFromDb() {
-        log("retrieveStockQuotesFromDb");
+        DebugLog.logMethod();
         if (getContext() == null) {
             throw new NullPointerException("getContext() returned null");
         }
@@ -358,7 +348,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private void updateRecyclerView() {
-        log("updateRecyclerView");
+        DebugLog.logMethod();
         swipeRefreshLayout.setRefreshing(false);
         if (stockQuotes.size() > 0) {
             if (error.getVisibility() != View.GONE) {
@@ -384,7 +374,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     @Override
     public void onStockClick(String symbol, String name, float price) {
-        log("Symbol clicked: " +  symbol + ", " + name);
+        DebugLog.logMessage("Symbol clicked: " +  symbol + ", " + name);
         Activity activity = getActivity();
         if (activity instanceof StockListActivity) {
             ((StockListActivity) activity).onStockClick(symbol, name, price);
@@ -392,7 +382,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private void deleteStockQuote(final String symbol) {
-        log("deleteStockQuote");
+        DebugLog.logMethod();
         Single<Boolean> deleteStockQuoteSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -406,14 +396,14 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                 .subscribeWith(new DisposableSingleObserver<Boolean>() {
                     @Override
                     public void onSuccess(Boolean value) {
-                        log("deleteStockQuoteSingleObserver - onSuccess");
+                        DebugLog.logMessage("deleteStockQuoteSingleObserver - onSuccess");
                         onDeleteSuccessful(symbol);
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log("deleteStockQuoteSingleObserver - onError");
-                        log(e.getMessage());
+                        DebugLog.logMessage("deleteStockQuoteSingleObserver - onError");
+                        DebugLog.logMessage(e.getMessage());
                         e.printStackTrace();
                         showSnackbar(String.format(getString(R.string.stock_quote_delete_unsuccessful), symbol));
                     }
@@ -422,7 +412,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private boolean deleteStockQuoteFromDb(String symbol) {
-        log("deleteStockQuoteFromDb");
+        DebugLog.logMethod();
         // Delete stock quote
         int numRowsDeleted = getContext().getContentResolver()
                 .delete(Contract.Quote.makeUriForStock(symbol), null, null);
@@ -451,7 +441,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     }
 
     private void updateAppWidget() {
-        log("updateAppWidget");
+        DebugLog.logMethod();
         Context context = getContext();
         Intent intent = new Intent(context, StockQuoteWidgetProvider.class);
         intent.setAction(AppWidgetManager.ACTION_APPWIDGET_UPDATE);
@@ -468,11 +458,11 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     public void onDestroyView() {
         EventBus.getDefault().unregister(this);
         super.onDestroyView();
-        log("onDestroyView");
+        DebugLog.logMethod();
 
         disposables.dispose();
         if (disposables.isDisposed()) {
-            log("isDisposed");
+            DebugLog.logMessage("isDisposed");
         }
         adapter.releaseResources();
         itemTouchHelper.attachToRecyclerView(null);

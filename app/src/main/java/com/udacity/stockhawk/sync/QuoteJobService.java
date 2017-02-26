@@ -3,33 +3,26 @@ package com.udacity.stockhawk.sync;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
-import android.util.Log;
+
+import com.udacity.stockhawk.util.DebugLog;
 
 public class QuoteJobService extends JobService {
-    private static final String tag = "DL-QJS";
-    private static final boolean DEBUG = true;
-    private static void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
-        }
-    }
-
     @Override
     public void onCreate() {
         super.onCreate();
-        log("onCreate");
+        DebugLog.logMethod();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        log("onStartCommand ");
+        DebugLog.logMethod();
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public boolean onStartJob(JobParameters jobParameters) {
-        log("onStartJob " + jobParameters.getJobId());
-        log("Job id: " + jobParameters.getJobId());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Job id: " + jobParameters.getJobId());
         Intent nowIntent = new Intent(getApplicationContext(), QuoteIntentService.class);
         getApplicationContext().startService(nowIntent);
         return true;
@@ -37,7 +30,8 @@ public class QuoteJobService extends JobService {
 
     @Override
     public boolean onStopJob(JobParameters jobParameters) {
-        log("onStopJob " + jobParameters.getJobId());
+        DebugLog.logMethod();
+        DebugLog.logMessage("Job id: " + jobParameters.getJobId());
         /*
         Return true to indicate to the JobManager that the job
         should be rescheduled based on the retry criteria provided

@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,6 +30,7 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.sync.event.DataUpdatedEvent;
 import com.udacity.stockhawk.util.Constants;
+import com.udacity.stockhawk.util.DebugLog;
 
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -163,7 +163,7 @@ public class StockDetailFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        log("onCreate");
+        DebugLog.logMethod();
         if (getActivity() == null
                 || getActivity().getIntent() == null) {
             return;
@@ -182,7 +182,7 @@ public class StockDetailFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        log("onCreateView");
+        DebugLog.logMethod();
         View view = inflater.inflate(R.layout.fragment_stock_detail, container, false);
         ButterKnife.bind(this, view);
 
@@ -208,7 +208,7 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void initChartView() {
-        log("initChartView");
+        DebugLog.logMethod();
         styleLineChart();
         styleDateAxis();
         styleStockCloseAxis();
@@ -362,7 +362,7 @@ public class StockDetailFragment extends Fragment {
      *                           from db.
      */
     private void loadHistoricalStockQuotes(boolean isDataUpdatedEvent) {
-        log("loadHistoricalStockQuotes");
+        DebugLog.logMethod();
 
         if (!isDataUpdatedEvent && stockQuotes != null) {
             drawGraph();
@@ -372,7 +372,7 @@ public class StockDetailFragment extends Fragment {
         Single<Boolean> stockQuotesSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                log("stockQuotesSingle - call");
+                DebugLog.logMessage("stockQuotesSingle - call");
                 return retrieveStockQuotesFromDb();
             }
         });
@@ -383,20 +383,20 @@ public class StockDetailFragment extends Fragment {
                 .subscribeWith(new DisposableSingleObserver<Boolean>() {
                     @Override
                     public void onSuccess(Boolean value) {
-                        log("stockQuotesSingleObserver - onSuccess");
+                        DebugLog.logMessage("stockQuotesSingleObserver - onSuccess");
                         drawGraph();
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log("stockQuotesSingleObserver - onError");
+                        DebugLog.logMessage("stockQuotesSingleObserver - onError");
                     }
                 });
         disposables.add(disposableSingleObserver);
     }
 
     private boolean retrieveStockQuotesFromDb() {
-        log("retrieveStockQuotesFromDb");
+        DebugLog.logMethod();
         Cursor cursor = getContext().getContentResolver()
                 .query(
                         Contract.Quote.makeUriForStock(stockSymbol),
@@ -456,7 +456,7 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void drawGraph() {
-        log("drawGraph");
+        DebugLog.logMethod();
         getStocksFromDate();
 
         // Clears all entries in the arrayList containing chart entries
@@ -596,7 +596,7 @@ public class StockDetailFragment extends Fragment {
      *                           from db.
      */
     private void loadStockKeyStats(boolean isDataUpdatedEvent) {
-        log("loadStockKeyStats");
+        DebugLog.logMethod();
 
         if (!isDataUpdatedEvent && stockKeyStats != null) {
             updateKeyStatsView();
@@ -606,7 +606,7 @@ public class StockDetailFragment extends Fragment {
         Single<Boolean> stockKeyStatsSingle = Single.fromCallable(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                log("stockKeyStatsSingle - call");
+                DebugLog.logMessage("stockKeyStatsSingle - call");
                 return retrieveStockKeyStatsFromDb();
             }
         });
@@ -617,14 +617,14 @@ public class StockDetailFragment extends Fragment {
                 .subscribeWith(new DisposableSingleObserver<Boolean>() {
                     @Override
                     public void onSuccess(Boolean value) {
-                        log("stockKeyStatsSingleObserver - onSuccess");
+                        DebugLog.logMessage("stockKeyStatsSingleObserver - onSuccess");
                         updateKeyStatsView();
                     }
 
                     @Override
                     public void onError(Throwable e) {
-                        log("stockKeyStatsSingleObserver - onError");
-                        log(e.toString() + "\n\n" + e.getMessage());
+                        DebugLog.logMessage("stockKeyStatsSingleObserver - onError");
+                        DebugLog.logMessage(e.toString() + "\n\n" + e.getMessage());
                         e.printStackTrace();
                     }
                 });
@@ -632,7 +632,7 @@ public class StockDetailFragment extends Fragment {
     }
 
     private boolean retrieveStockKeyStatsFromDb() {
-        log("retrieveStockKeyStatsFromDb");
+        DebugLog.logMethod();
         Cursor cursor = getContext().getContentResolver()
                 .query(
                         Contract.KeyStats.makeUriForStockKeyStats(stockSymbol),
@@ -674,12 +674,12 @@ public class StockDetailFragment extends Fragment {
                 new DecimalFormat("##.##B").format(marketCap)
         );
 
-        log("KeyStats: " + stockKeyStats.toString());
+        DebugLog.logMessage("KeyStats: " + stockKeyStats.toString());
         return true;
     }
 
     private void updateKeyStatsView() {
-        log("updateKeyStatsView");
+        DebugLog.logMethod();
         textViewDayRange.setText(String.format(
                 getString(R.string.day_range),
                 stockKeyStats.get(Constants.POSITION_DAY_LOW) + " - " + stockKeyStats.get(Constants.POSITION_DAY_HIGH)
@@ -729,12 +729,10 @@ public class StockDetailFragment extends Fragment {
     }
 
     private void restoreInstanceState(Bundle savedInstanceState) {
-        log("restoreInstanceState");
+        DebugLog.logMethod();
         if (savedInstanceState == null) {
             return;
         }
-
-        log("Actually worked");
 
         if (stockName != null) {
             stockName = savedInstanceState.getString(Constants.BUNDLE_STOCK_NAME);
@@ -758,7 +756,7 @@ public class StockDetailFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        log("onDestroyView");
+        DebugLog.logMethod();
 
         /*
         Release references that various objects may be
@@ -777,15 +775,7 @@ public class StockDetailFragment extends Fragment {
 
         disposables.dispose();
         if (disposables.isDisposed()) {
-            log("isDisposed");
-        }
-    }
-
-    private static final String tag = "CL-SDF";
-    private static final boolean DEBUG = true;
-    private static final void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
+            DebugLog.logMessage("isDisposed");
         }
     }
 }

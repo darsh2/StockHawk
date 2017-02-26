@@ -8,12 +8,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 import com.udacity.stockhawk.data.Contract;
 import com.udacity.stockhawk.data.PrefUtils;
 import com.udacity.stockhawk.sync.event.DataUpdatedEvent;
 import com.udacity.stockhawk.sync.event.ErrorEvent;
+import com.udacity.stockhawk.util.DebugLog;
 
 import org.greenrobot.eventbus.EventBus;
 
@@ -35,7 +35,6 @@ import yahoofinance.quotes.stock.StockQuote;
 
 public final class QuoteSyncJob {
     private static final int ONE_OFF_ID = 2;
-    private static final String ACTION_DATA_UPDATED = "com.udacity.stockhawk.ACTION_DATA_UPDATED";
 
     /**
      * Interval within which the job should recur. Increasing
@@ -60,7 +59,7 @@ public final class QuoteSyncJob {
     }
 
     static void getQuotes(Context context) {
-        log("getQuotes");
+        DebugLog.logMethod();
 
         Calendar from = Calendar.getInstance();
         Calendar to = Calendar.getInstance();
@@ -73,7 +72,7 @@ public final class QuoteSyncJob {
             stockCopy.addAll(stockPref);
             String[] stockArray = stockPref.toArray(new String[stockPref.size()]);
 
-            log(stockCopy.toString());
+            DebugLog.logMessage(stockCopy.toString());
 
             if (stockArray.length == 0) {
                 return;
@@ -82,7 +81,7 @@ public final class QuoteSyncJob {
             Map<String, Stock> quotes = YahooFinance.get(stockArray);
             Iterator<String> iterator = stockCopy.iterator();
 
-            log(quotes.toString());
+            DebugLog.logMessage(quotes.toString());
 
             ArrayList<ContentValues> quoteCVs = new ArrayList<>(stockArray.length);
             ArrayList<ContentValues> keyStatsCVs = new ArrayList<>(stockArray.length);
@@ -139,25 +138,21 @@ public final class QuoteSyncJob {
                             keyStatsCVs.toArray(new ContentValues[keyStatsCVs.size()])
                     );
 
-            log("Process: " + android.os.Process.myPid());
             EventBus.getDefault().post(new DataUpdatedEvent(System.currentTimeMillis(), isNewSymbolAdded));
-            Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
-            context.sendBroadcast(dataUpdatedIntent);
 
         } catch (FileNotFoundException fileNotFoundException) {
             /*
             Earlier adding an invalid stock symbol threw NullPointerException
             but now it throws FileNotFoundException.
              */
-            log("Stock symbol not found");
+            DebugLog.logMessage("Stock symbol not found");
             fileNotFoundException.printStackTrace();
             EventBus.getDefault().post(new ErrorEvent(ErrorEvent.SYMBOL_NOT_FOUND_ERROR, currentSymbol));
 
         } catch (IOException ioException) {
-            log("IOException: Error fetching stock quotes");
+            DebugLog.logMessage("IOException: Error fetching stock quotes");
             ioException.printStackTrace();
             EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR, null));
-
         }
 
         // Reset flag
@@ -165,7 +160,7 @@ public final class QuoteSyncJob {
     }
 
     private static void schedulePeriodic(Context context) {
-        log("schedulePeriodic");
+        DebugLog.logMethod();
         JobInfo.Builder builder = new JobInfo.Builder(PERIODIC_ID, new ComponentName(context, QuoteJobService.class));
         /*
         Setting a linear back off policy because the periodic job of
@@ -188,7 +183,7 @@ public final class QuoteSyncJob {
     }
 
     public static synchronized void syncImmediately(Context context, boolean isNewSymbol) {
-        log("syncImmediately");
+        DebugLog.logMethod();
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo networkInfo = cm.getActiveNetworkInfo();
@@ -204,14 +199,6 @@ public final class QuoteSyncJob {
 
             JobScheduler scheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
             scheduler.schedule(builder.build());
-        }
-    }
-
-    private static final String tag = "DL-QSJ";
-    private static final boolean DEBUG = true;
-    private static void log(String message) {
-        if (DEBUG) {
-            Log.i(tag, message);
         }
     }
 }
