@@ -18,6 +18,8 @@
 
     <string name="action_change_units">@string/pref_display_mode_key</string>
 
+    <string name="content_description_fab">Add new stock by entering stock symbol</string>
+
     <string name="dialog_title">Add Stock</string>
     <string name="dialog_hint">Symbol (e.g. GOOG)</string>
     <string name="dialog_cancel">Cancel</string>
@@ -43,6 +45,11 @@
     <string name="three_months" translatable="false">3M</string>
     <string name="six_months" translatable="false">6M</string>
     <string name="two_years" translatable="false">2Y</string>
+    
+    <string name="content_description_one_month">Stock price graph for the past one month</string>
+    <string name="content_description_three_months">Stock price graph for the past three months</string>
+    <string name="content_description_six_months">Stock price graph for the past six months</string>
+    <string name="content_description_two_years">Stock price graph for the past two years</string>
 
     <string name="key_stats" translatable="false">KEY STATS</string>
     <string name="day_range" translatable="false">Day Range&#58; %s</string>
