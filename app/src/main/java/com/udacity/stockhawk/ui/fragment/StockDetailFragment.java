@@ -500,6 +500,12 @@ public class StockDetailFragment extends Fragment {
         onTabSelectedListener = new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
+                /*
+                X axis labels are disabled when time period
+                selected is one month. Hence re-enable labels.
+                 */
+                lineChart.getXAxis().setDrawLabels(true);
+
                 tabSelectedIndex = tab.getPosition();
 
                 int months;
@@ -508,7 +514,13 @@ public class StockDetailFragment extends Fragment {
                 switch (tabSelectedIndex) {
                     case 0: {
                         months = -1;
-                        lineChart.getXAxis().setLabelCount(2, false);
+                        /*
+                        Since the minimum number of labels is 2, the same
+                        date is repeated twice in case viewing stock price
+                        graph for one month. Hence disable label drawing
+                        for one month period. This is just a temporary fix.
+                         */
+                        lineChart.getXAxis().setDrawLabels(false);
                         break;
                     }
 
