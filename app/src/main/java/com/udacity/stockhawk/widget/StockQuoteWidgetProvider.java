@@ -47,11 +47,11 @@ public class StockQuoteWidgetProvider extends AppWidgetProvider {
             /*
             Synthesizing a new back stack for deep links. Since clicking on a particular
             stock quote in the widget directly opens StockDetailActivity, on pressing
-            back, the app closes without navigating back to MainActivity.
+            back, the app closes without navigating back to StockListActivity.
 
             By specifying the parent activity for StockDetailActivity in the manifest,
             and using the TaskStackBuilder to add parent activity, on navigating back
-            from StockDetailActivity we get to MainActivity.
+            from StockDetailActivity we get to StockListActivity.
 
             Ref: https://developer.android.com/training/implementing-navigation/temporal.html#SynthesizeBackStack
              */

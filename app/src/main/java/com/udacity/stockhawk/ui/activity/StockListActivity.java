@@ -10,7 +10,7 @@ import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import com.udacity.stockhawk.util.Constants;
 
-public class MainActivity extends AppCompatActivity {
+public class StockListActivity extends AppCompatActivity {
     private static final String tag = "DL-MA";
     private static final boolean DEBUG = false;
     private static void log(String message) {
@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_stock_list);
 
         log("onCreate");
 

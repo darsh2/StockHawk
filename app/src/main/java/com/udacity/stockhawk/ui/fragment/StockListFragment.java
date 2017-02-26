@@ -34,7 +34,7 @@ import com.udacity.stockhawk.model.StockQuote;
 import com.udacity.stockhawk.sync.QuoteSyncJob;
 import com.udacity.stockhawk.sync.event.DataUpdatedEvent;
 import com.udacity.stockhawk.sync.event.ErrorEvent;
-import com.udacity.stockhawk.ui.activity.MainActivity;
+import com.udacity.stockhawk.ui.activity.StockListActivity;
 import com.udacity.stockhawk.ui.adapter.StockAdapter;
 import com.udacity.stockhawk.ui.dialog.AddStockDialog;
 import com.udacity.stockhawk.util.Constants;
@@ -89,13 +89,13 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         log("onCreateView");
         log("Process: " + android.os.Process.myPid());
-        View view = inflater.inflate(R.layout.fragment_stocks_list, container, true);
+        View view = inflater.inflate(R.layout.fragment_stock_list, container, true);
         ButterKnife.bind(this, view);
 
         toolbar.setTitle(getString(R.string.app_name));
-        if (getActivity() instanceof MainActivity) {
-            ((MainActivity) getActivity()).setSupportActionBar(toolbar);
-            ((MainActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
+        if (getActivity() instanceof StockListActivity) {
+            ((StockListActivity) getActivity()).setSupportActionBar(toolbar);
+            ((StockListActivity) getActivity()).getSupportActionBar().setDisplayHomeAsUpEnabled(false);
         }
 
         stockQuotes = new ArrayList<>();
@@ -378,8 +378,8 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     public void onStockClick(String symbol, String name, float price) {
         log("Symbol clicked: " +  symbol + ", " + name);
         Activity activity = getActivity();
-        if (activity instanceof MainActivity) {
-            ((MainActivity) activity).onStockClick(symbol, name, price);
+        if (activity instanceof StockListActivity) {
+            ((StockListActivity) activity).onStockClick(symbol, name, price);
         }
     }
 
