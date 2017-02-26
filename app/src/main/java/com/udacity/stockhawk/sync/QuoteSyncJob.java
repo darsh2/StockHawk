@@ -49,6 +49,13 @@ public final class QuoteSyncJob {
     private static final int PERIODIC_ID = 1;
     private static final int YEARS_OF_HISTORY = 2;
 
+    /**
+     * Used to inform event subscribers about the addition of a new
+     * stock symbol. If a new stock symbol has been successfully
+     * added, the app widget has to be updated.
+     */
+    private static boolean isNewSymbolAdded = false;
+
     private QuoteSyncJob() {
     }
 
@@ -133,7 +140,7 @@ public final class QuoteSyncJob {
                     );
 
             log("Process: " + android.os.Process.myPid());
-            EventBus.getDefault().post(new DataUpdatedEvent(System.currentTimeMillis()));
+            EventBus.getDefault().post(new DataUpdatedEvent(System.currentTimeMillis(), isNewSymbolAdded));
             Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED);
             context.sendBroadcast(dataUpdatedIntent);
 
@@ -152,6 +159,9 @@ public final class QuoteSyncJob {
             EventBus.getDefault().post(new ErrorEvent(ErrorEvent.NETWORK_ERROR, null));
 
         }
+
+        // Reset flag
+        isNewSymbolAdded = false;
     }
 
     private static void schedulePeriodic(Context context) {
@@ -174,10 +184,10 @@ public final class QuoteSyncJob {
 
     public static synchronized void initialize(final Context context) {
         schedulePeriodic(context);
-        syncImmediately(context);
+        syncImmediately(context, false);
     }
 
-    public static synchronized void syncImmediately(Context context) {
+    public static synchronized void syncImmediately(Context context, boolean isNewSymbol) {
         log("syncImmediately");
         ConnectivityManager cm =
                 (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -185,6 +195,7 @@ public final class QuoteSyncJob {
         if (networkInfo != null && networkInfo.isConnectedOrConnecting()) {
             Intent nowIntent = new Intent(context, QuoteIntentService.class);
             context.startService(nowIntent);
+            isNewSymbolAdded = isNewSymbol;
 
         } else {
             JobInfo.Builder builder = new JobInfo.Builder(ONE_OFF_ID, new ComponentName(context, QuoteJobService.class));

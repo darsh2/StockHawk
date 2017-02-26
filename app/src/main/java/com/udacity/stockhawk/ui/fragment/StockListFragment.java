@@ -157,7 +157,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             loadStockQuotes();
             showSnackbar(getString(R.string.toast_error_no_internet_connection));
         }
-        QuoteSyncJob.syncImmediately(getContext());
+        QuoteSyncJob.syncImmediately(getContext(), false);
     }
 
     private boolean networkUp() {
@@ -196,7 +196,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             swipeRefreshLayout.setRefreshing(true);
         }
         PrefUtils.addStock(getActivity(), symbol);
-        QuoteSyncJob.syncImmediately(getActivity());
+        QuoteSyncJob.syncImmediately(getActivity(), true);
     }
 
     @Override
@@ -282,9 +282,13 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdatedEvent(DataUpdatedEvent event) {
         log("onDataUpdatedEvent");
+        if (event.timeStamp == -1) {
+            return;
+        }
         swipeRefreshLayout.setRefreshing(true);
-        if (event.timeStamp != -1) {
-            loadStockQuotes();
+        loadStockQuotes();
+        if (event.isNewSymbolAdded) {
+            updateAppWidget();
         }
     }
 
