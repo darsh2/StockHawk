@@ -30,6 +30,7 @@
         android:id="@+id/text_view_empty_widget"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/white"
         android:text="@string/error_no_stocks"
         android:textColor="@color/black"/>
 </LinearLayout>
