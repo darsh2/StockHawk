@@ -74,7 +74,7 @@ public class StockAdapter extends RecyclerView.Adapter<StockAdapter.StockViewHol
         float rawAbsoluteChange = stockQuotes.get(position).absoluteChange;
         float percentageChange = stockQuotes.get(position).percentageChange;
 
-        if (rawAbsoluteChange > 0) {
+        if (rawAbsoluteChange >= 0) {
             holder.change.setTextColor(ContextCompat.getColor(context, R.color.material_green_700));
         } else {
             holder.change.setTextColor(ContextCompat.getColor(context, R.color.material_red_700));
