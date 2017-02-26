@@ -174,9 +174,9 @@ public class StockDetailFragment extends Fragment {
         if (extras == null) {
             return;
         }
-        stockSymbol = extras.getString(Constants.INTENT_EXTRA_STOCK_SYMBOL);
-        stockName = extras.getString(Constants.INTENT_EXTRA_STOCK_NAME);
-        stockPrice = extras.getString(Constants.INTENT_EXTRA_STOCK_PRICE);
+        stockSymbol = extras.getString(Constants.BUNDLE_STOCK_SYMBOL);
+        stockName = extras.getString(Constants.BUNDLE_STOCK_NAME);
+        stockPrice = extras.getString(Constants.BUNDLE_STOCK_PRICE);
     }
 
     @Nullable

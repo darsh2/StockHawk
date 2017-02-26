@@ -7,10 +7,6 @@ import com.udacity.stockhawk.data.Contract;
  */
 
 public class Constants {
-    public static final String INTENT_EXTRA_STOCK_SYMBOL = "StockSymbol";
-    public static final String INTENT_EXTRA_STOCK_NAME = "StockName";
-    public static final String INTENT_EXTRA_STOCK_PRICE = "StockPrice";
-
     public static final String BUNDLE_STOCK_NAME = "StockName";
     public static final String BUNDLE_STOCK_SYMBOL = "StockSymbol";
     public static final String BUNDLE_STOCK_PRICE = "StockPrice";
