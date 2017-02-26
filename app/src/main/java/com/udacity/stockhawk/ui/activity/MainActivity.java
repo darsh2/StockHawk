@@ -42,10 +42,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onStockClick(String symbol, String name, float price) {
+        Bundle extras = new Bundle();
+        extras.putString(Constants.BUNDLE_STOCK_SYMBOL, symbol);
+        extras.putString(Constants.BUNDLE_STOCK_NAME, name);
+        extras.putString(Constants.BUNDLE_STOCK_PRICE, String.valueOf(price));
+
         Intent intent = new Intent(this, StockDetailActivity.class);
-        intent.putExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL, symbol);
-        intent.putExtra(Constants.INTENT_EXTRA_STOCK_NAME, name);
-        intent.putExtra(Constants.INTENT_EXTRA_STOCK_PRICE, String.valueOf(price));
+        intent.putExtras(extras);
         startActivity(intent);
     }
 

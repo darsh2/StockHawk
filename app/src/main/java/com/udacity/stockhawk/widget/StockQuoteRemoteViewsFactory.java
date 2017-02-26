@@ -1,7 +1,9 @@
 package com.udacity.stockhawk.widget;
 
 import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
+import android.os.Bundle;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.widget.RemoteViews;
@@ -9,11 +11,15 @@ import android.widget.RemoteViewsService;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
+import com.udacity.stockhawk.util.Constants;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Locale;
+
+import static com.udacity.stockhawk.R.id.price;
+import static com.udacity.stockhawk.R.id.symbol;
 
 /**
  * Created by darshan on 11/2/17.
@@ -24,6 +30,7 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
 
     private String[] projection = new String[]{
             Contract.Quote.COLUMN_SYMBOL,
+            Contract.Quote.COLUMN_NAME,
             Contract.Quote.COLUMN_PRICE,
             Contract.Quote.COLUMN_PERCENTAGE_CHANGE
     };
@@ -77,9 +84,10 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
 
         while (cursor.moveToNext()) {
             String symbol = cursor.getString(cursor.getColumnIndex(projection[0]));
-            String price = dollarFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[1])));
-            String percentageChange = percentageFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[2])) / 100.0);
-            widgetItems.add(new StockQuoteWidgetItem(symbol, price, percentageChange));
+            String name = cursor.getString(cursor.getColumnIndex(projection[1]));
+            String price = dollarFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[2])));
+            String percentageChange = percentageFormat.format(cursor.getDouble(cursor.getColumnIndex(projection[3])) / 100.0);
+            widgetItems.add(new StockQuoteWidgetItem(symbol, name, price, percentageChange));
         }
         cursor.close();
     }
@@ -100,14 +108,26 @@ class StockQuoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFact
     @Override
     public RemoteViews getViewAt(int position) {
         RemoteViews remoteViews = new RemoteViews(context.getPackageName(), R.layout.list_item_widget_stock_quote);
-        remoteViews.setTextViewText(R.id.symbol, widgetItems.get(position).symbol);
-        remoteViews.setTextViewText(R.id.price, widgetItems.get(position).price);
+        remoteViews.setTextViewText(symbol, widgetItems.get(position).symbol);
+        remoteViews.setTextViewText(price, widgetItems.get(position).price);
         int colorId = R.color.material_green_700;
         if (widgetItems.get(position).percentageChange.charAt(0) == '-') {
             colorId = R.color.material_red_700;
         }
         remoteViews.setTextColor(R.id.change, ContextCompat.getColor(context.getApplicationContext(), colorId));
         remoteViews.setTextViewText(R.id.change, widgetItems.get(position).percentageChange);
+
+        Bundle extras = new Bundle();
+        extras.putString(Constants.BUNDLE_STOCK_SYMBOL, widgetItems.get(position).symbol);
+        extras.putString(Constants.BUNDLE_STOCK_NAME, widgetItems.get(position).name);
+        extras.putString(
+                Constants.BUNDLE_STOCK_PRICE,
+                widgetItems.get(position).price.substring(1)
+        );
+        Intent fillInIntent = new Intent();
+        fillInIntent.putExtras(extras);
+        remoteViews.setOnClickFillInIntent(R.id.widget_row, fillInIntent);
+
         return remoteViews;
     }
 

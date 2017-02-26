@@ -6,11 +6,13 @@ package com.udacity.stockhawk.widget;
 
 class StockQuoteWidgetItem {
     String symbol;
+    String name;
     String price;
     String percentageChange;
 
-    StockQuoteWidgetItem(String symbol, String price, String percentageChange) {
+    StockQuoteWidgetItem(String symbol, String name, String price, String percentageChange) {
         this.symbol = symbol;
+        this.name = name;
         this.price = price;
         this.percentageChange = percentageChange;
     }

@@ -170,9 +170,13 @@ public class StockDetailFragment extends Fragment {
         }
 
         Intent intent = getActivity().getIntent();
-        stockSymbol = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_SYMBOL);
-        stockName = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_NAME);
-        stockPrice = intent.getStringExtra(Constants.INTENT_EXTRA_STOCK_PRICE);
+        Bundle extras = intent.getExtras();
+        if (extras == null) {
+            return;
+        }
+        stockSymbol = extras.getString(Constants.INTENT_EXTRA_STOCK_SYMBOL);
+        stockName = extras.getString(Constants.INTENT_EXTRA_STOCK_NAME);
+        stockPrice = extras.getString(Constants.INTENT_EXTRA_STOCK_PRICE);
     }
 
     @Nullable
