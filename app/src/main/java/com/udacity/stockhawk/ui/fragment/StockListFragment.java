@@ -423,8 +423,15 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
     private boolean deleteStockQuoteFromDb(String symbol) {
         log("deleteStockQuoteFromDb");
+        // Delete stock quote
         int numRowsDeleted = getContext().getContentResolver()
                 .delete(Contract.Quote.makeUriForStock(symbol), null, null);
+        if (numRowsDeleted != 1) {
+            return false;
+        }
+        // Delete stock key stats
+        numRowsDeleted = getContext().getContentResolver()
+                .delete(Contract.KeyStats.makeUriForStockKeyStats(symbol), null, null);
         return numRowsDeleted == 1;
     }
 
