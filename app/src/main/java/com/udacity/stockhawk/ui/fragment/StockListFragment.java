@@ -309,7 +309,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                     @Override
                     public void onSuccess(Boolean value) {
                         log("stockQuotesSingleObserver - onSuccess");
-                        updateAdapterView();
+                        updateRecyclerView();
                     }
 
                     @Override
@@ -357,15 +357,23 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         return true;
     }
 
-    private void updateAdapterView() {
-        log("updateAdapterView");
+    private void updateRecyclerView() {
+        log("updateRecyclerView");
         swipeRefreshLayout.setRefreshing(false);
         if (stockQuotes.size() > 0) {
-            error.setVisibility(View.GONE);
+            if (error.getVisibility() != View.GONE) {
+                error.setVisibility(View.GONE);
+            }
+            if (stockRecyclerView.getVisibility() != View.VISIBLE) {
+                stockRecyclerView.setVisibility(View.VISIBLE);
+            }
             adapter.updateStockQuotes(stockQuotes);
             return;
         }
 
+        if (stockRecyclerView.getVisibility() != View.GONE) {
+            stockRecyclerView.setVisibility(View.GONE);
+        }
         if (PrefUtils.getStocks(getContext()).size() == 0) {
             error.setText(getString(R.string.error_no_stocks));
         } else {
@@ -429,7 +437,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                 break;
             }
         }
-        updateAdapterView();
+        updateRecyclerView();
         showSnackbar(String.format(getString(R.string.stock_quote_delete_successful), symbol));
 
         updateAppWidget();
