@@ -2,9 +2,10 @@ package com.udacity.stockhawk;
 
 import android.app.Application;
 
+import com.udacity.stockhawk.util.DebugLog;
+
 import java.util.logging.Level;
 
-import timber.log.Timber;
 import yahoofinance.YahooFinance;
 
 public class StockHawkApp extends Application {
@@ -19,9 +20,7 @@ public class StockHawkApp extends Application {
          */
         YahooFinance.logger.setLevel(Level.OFF);
 
-        if (BuildConfig.DEBUG) {
-            Timber.uprootAll();
-            Timber.plant(new Timber.DebugTree());
-        }
+        // Turn off logging
+        DebugLog.setLoggingEnabled(false);
     }
 }
