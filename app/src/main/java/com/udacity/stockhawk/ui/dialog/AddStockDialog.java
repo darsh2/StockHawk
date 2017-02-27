@@ -21,7 +21,6 @@ import com.udacity.stockhawk.ui.fragment.StockListFragment;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-
 public class AddStockDialog extends DialogFragment {
 
     @BindView(R.id.dialog_stock)

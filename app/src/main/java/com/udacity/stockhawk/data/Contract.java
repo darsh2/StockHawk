@@ -27,23 +27,6 @@ public final class Contract {
         public static final String COLUMN_PERCENTAGE_CHANGE = "percentage_change";
         public static final String COLUMN_HISTORY = "history";
 
-        public static final int POSITION_ID = 0;
-        public static final int POSITION_SYMBOL = 1;
-        public static final int POSITION_NAME = 2;
-        public static final int POSITION_PRICE = 3;
-        public static final int POSITION_ABSOLUTE_CHANGE = 4;
-        public static final int POSITION_PERCENTAGE_CHANGE = 5;
-        public static final int POSITION_HISTORY = 6;
-
-        public static final String[] QUOTE_COLUMNS = {
-                _ID,
-                COLUMN_SYMBOL,
-                COLUMN_NAME,
-                COLUMN_PRICE,
-                COLUMN_ABSOLUTE_CHANGE,
-                COLUMN_PERCENTAGE_CHANGE,
-                COLUMN_HISTORY
-        };
         static final String TABLE_NAME = "quotes";
 
         public static Uri makeUriForStock(String symbol) {

@@ -211,7 +211,7 @@ public class StockDetailFragment extends Fragment {
         DebugLog.logMethod();
         styleLineChart();
         styleDateAxis();
-        styleStockCloseAxis();
+        styleStockPriceAxis();
         styleDataSet();
         loadHistoricalStockQuotes(false);
     }
@@ -312,21 +312,21 @@ public class StockDetailFragment extends Fragment {
         }
     }
 
-    private void styleStockCloseAxis() {
-        YAxis stockCloseAxis = lineChart.getAxisLeft();
-        stockCloseAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        stockCloseAxis.setLabelCount(4, false);
-        stockCloseAxis.setGranularity(1f);
-        stockCloseAxis.setDrawGridLines(true);
-        stockCloseAxis.setAxisLineColor(Color.BLACK);
-        stockCloseAxis.setTextColor(Color.BLACK);
-        stockCloseAxis.setValueFormatter(new StockCloseAxisValueFormatter());
+    private void styleStockPriceAxis() {
+        YAxis stockPriceAxis = lineChart.getAxisLeft();
+        stockPriceAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
+        stockPriceAxis.setLabelCount(4, false);
+        stockPriceAxis.setGranularity(1f);
+        stockPriceAxis.setDrawGridLines(true);
+        stockPriceAxis.setAxisLineColor(Color.BLACK);
+        stockPriceAxis.setTextColor(Color.BLACK);
+        stockPriceAxis.setValueFormatter(new StockPriceAxisValueFormatter());
     }
 
-    private class StockCloseAxisValueFormatter implements IAxisValueFormatter {
+    private class StockPriceAxisValueFormatter implements IAxisValueFormatter {
         private DecimalFormat decimalFormat;
 
-        StockCloseAxisValueFormatter() {
+        StockPriceAxisValueFormatter() {
             decimalFormat = new DecimalFormat("####.##");
         }
 
@@ -718,7 +718,7 @@ public class StockDetailFragment extends Fragment {
 
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdatedEvent(DataUpdatedEvent event) {
-        if (event.timeStamp != -1) {
+        if (event.getTimeStamp() != -1) {
             loadHistoricalStockQuotes(true);
             loadStockKeyStats(true);
         }
@@ -740,6 +740,9 @@ public class StockDetailFragment extends Fragment {
         outState.putStringArrayList(Constants.BUNDLE_STOCK_KEY_STATS, stockKeyStats);
     }
 
+    /**
+     * Restore values of various fields if present in savedInstanceState bundle.
+     */
     private void restoreInstanceState(Bundle savedInstanceState) {
         DebugLog.logMethod();
         if (savedInstanceState == null) {

@@ -237,15 +237,22 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onErrorEvent(ErrorEvent event) {
         DebugLog.logMessage("onErrorEvent");
+
         swipeRefreshLayout.setRefreshing(false);
         if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
             showSnackbar(getString(R.string.error_network));
+
         } else if (event.getCode() == ErrorEvent.SYMBOL_NOT_FOUND_ERROR) {
             String symbol = "Stock symbol";
+            /*
+            If data for an entered symbol is not available, delete it
+            from the preferences as it is invalid.
+             */
             if (event.getSymbol() != null) {
                 symbol = event.getSymbol();
                 PrefUtils.removeStock(getContext(), symbol);
             }
+
             showSnackbar(String.format(getString(R.string.error_stock_symbol_not_found), symbol));
         }
     }
@@ -272,16 +279,28 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void onDataUpdatedEvent(DataUpdatedEvent event) {
         DebugLog.logMethod();
-        if (event.timeStamp == -1) {
+        if (event.getTimeStamp() == -1) {
             return;
         }
+
+        /*
+        Reload stock quotes from db.
+         */
         swipeRefreshLayout.setRefreshing(true);
         loadStockQuotes();
-        if (event.isNewSymbolAdded) {
+        /*
+        DataUpdatedEvent is fired since a new symbol was added.
+        Update app widget to reflect the change.
+         */
+        if (event.getIsNewSymbolAdded()) {
             updateAppWidget();
         }
     }
 
+    /**
+     * Fetches stock quotes from db in a separate thread
+     * and updates view in the main thread.
+     */
     private void loadStockQuotes() {
         DebugLog.logMethod();
         Single<Boolean> stockQuotesSingle = Single.fromCallable(new Callable<Boolean>() {
@@ -307,6 +326,12 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                         DebugLog.logMessage("stockQuotesSingleObserver - onError");
                         DebugLog.logMessage(e.toString() + "\n\n" + e.getMessage());
                         e.printStackTrace();
+
+                        /*
+                        In case of any error on fetching stock quotes from db, hide
+                        the refresh progress loader.
+                         */
+                        swipeRefreshLayout.setRefreshing(false);
                     }
                 });
         disposables.add(disposableSingleObserver);
@@ -361,6 +386,12 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             return;
         }
 
+        /*
+        Recycler view visibility is set to gone when there
+        are no stocks since the empty recycler view showed
+        a divider. This is a dirty fix and probably the
+        divider should not have been shown.
+         */
         if (stockRecyclerView.getVisibility() != View.GONE) {
             stockRecyclerView.setVisibility(View.GONE);
         }
@@ -381,6 +412,14 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         }
     }
 
+    /**
+     * Deletes stock from db and updates view.
+     * First deletes stock quote from db. Deletes both
+     * stock quotes and stock key stats. On successful
+     * deletion, stock is removed from preferences and
+     * views (app view and widget view) are updated.
+     * @param symbol Stock symbol that is to be deleted
+     */
     private void deleteStockQuote(final String symbol) {
         DebugLog.logMethod();
         Single<Boolean> deleteStockQuoteSingle = Single.fromCallable(new Callable<Boolean>() {

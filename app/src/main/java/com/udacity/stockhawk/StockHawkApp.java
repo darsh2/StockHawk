@@ -13,6 +13,10 @@ public class StockHawkApp extends Application {
     public void onCreate() {
         super.onCreate();
 
+        /*
+        Turn off logging to prevent numerous log entries being
+        added each time data is fetched from Yahoo Finance API.
+         */
         YahooFinance.logger.setLevel(Level.OFF);
 
         if (BuildConfig.DEBUG) {
