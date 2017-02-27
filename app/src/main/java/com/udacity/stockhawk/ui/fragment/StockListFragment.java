@@ -189,11 +189,18 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             }
         }
 
+        /*
+        Avoided saving stock to PrefUtils when there is no internet connection.
+        This is because the added stock symbol may be invalid. Also, with the
+        current logic in place, adding a stock when there is no internet
+        connection does not refresh widget.
+         */
         if (!networkUp()) {
             showSnackbar(String.format(getString(R.string.toast_stock_added_no_connectivity), symbol));
-        } else {
-            swipeRefreshLayout.setRefreshing(true);
+            return;
         }
+
+        swipeRefreshLayout.setRefreshing(true);
         PrefUtils.addStock(getActivity(), symbol);
         QuoteSyncJob.syncImmediately(getActivity(), true);
     }
