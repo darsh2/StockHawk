@@ -28,7 +28,7 @@
     <string name="error_no_network">No network connectivity! Will load stock cursor when the network is available.</string>
     <string name="error_no_stocks">No stocks added! Hit the floating action button to add one.</string>
 
-    <string name="toast_stock_added_no_connectivity">Symbol %s added. Will refresh when network available.</string>
+    <string name="toast_stock_added_no_connectivity" translatable="false">Please try adding %s when there is internet connection.</string>
     <string name="toast_no_connectivity">Will refresh when network available.</string>
 
     <string name="stock_symbol_constraint" translatable="false">Stock symbol must consist of one or more alphabetic characters.</string>
@@ -46,10 +46,10 @@
     <string name="six_months" translatable="false">6M</string>
     <string name="two_years" translatable="false">2Y</string>
     
-    <string name="content_description_one_month">Stock price graph for the past one month</string>
-    <string name="content_description_three_months">Stock price graph for the past three months</string>
-    <string name="content_description_six_months">Stock price graph for the past six months</string>
-    <string name="content_description_two_years">Stock price graph for the past two years</string>
+    <string name="content_description_one_month" translatable="false">Stock price graph for the past one month</string>
+    <string name="content_description_three_months" translatable="false">Stock price graph for the past three months</string>
+    <string name="content_description_six_months" translatable="false">Stock price graph for the past six months</string>
+    <string name="content_description_two_years" translatable="false">Stock price graph for the past two years</string>
 
     <string name="key_stats" translatable="false">KEY STATS</string>
     <string name="day_range" translatable="false">Day Range&#58; %s</string>
