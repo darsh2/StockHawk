@@ -6,5 +6,6 @@
     android:initialLayout="@layout/stock_quote_widget_layout"
     android:updatePeriodMillis="86400000"
     android:resizeMode="vertical"
-    android:widgetCategory="home_screen">
+    android:widgetCategory="home_screen"
+    android:previewImage="@drawable/widget_preview">
 </appwidget-provider>
