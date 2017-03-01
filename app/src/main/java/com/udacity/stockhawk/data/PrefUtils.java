@@ -49,6 +49,17 @@ public final class PrefUtils {
 
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
         SharedPreferences.Editor editor = prefs.edit();
+        /*
+        Fix issue where on relaunching app after deleting any stock
+        and killing the app, the stocks were restored. Documentation
+        for StringSet states it should not be modified. See here:
+        https://developer.android.com/reference/android/content/SharedPreferences.html#getStringSet(java.lang.String, java.util.Set<java.lang.String>)
+
+        Hence remove the string set and re-add it to ensure consistency.
+         */
+        editor.remove(key);
+        editor.apply();
+
         editor.putStringSet(key, stocks);
         editor.apply();
     }
