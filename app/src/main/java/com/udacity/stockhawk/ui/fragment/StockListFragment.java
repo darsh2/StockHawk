@@ -10,7 +10,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.widget.DividerItemDecoration;
@@ -25,6 +24,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.udacity.stockhawk.R;
 import com.udacity.stockhawk.data.Contract;
@@ -143,7 +143,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         swipeRefreshLayout.setRefreshing(true);
         if (!networkUp()) {
             loadStockQuotes();
-            showSnackbar(getString(R.string.toast_error_no_internet_connection));
+            showToast(getString(R.string.toast_error_no_internet_connection));
         }
         QuoteSyncJob.initialize(getContext());
     }
@@ -154,7 +154,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         error.setVisibility(View.GONE);
         if (!networkUp()) {
             loadStockQuotes();
-            showSnackbar(getString(R.string.toast_error_no_internet_connection));
+            showToast(getString(R.string.toast_error_no_internet_connection));
         }
         QuoteSyncJob.syncImmediately(getContext(), false);
     }
@@ -178,13 +178,13 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         if (symbol == null
                 || symbol.isEmpty()
                 || !symbol.matches("^[A-Z]+$")) {
-            showSnackbar(getString(R.string.stock_symbol_constraint));
+            showToast(getString(R.string.stock_symbol_constraint));
             return;
         }
 
         for (int i = 0, l = stockQuotes.size(); i < l; i++) {
             if (symbol.equals(stockQuotes.get(i).symbol)) {
-                showSnackbar(String.format(getString(R.string.stock_symbol_exists), symbol));
+                showToast(String.format(getString(R.string.stock_symbol_exists), symbol));
                 return;
             }
         }
@@ -196,7 +196,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         connection does not refresh widget.
          */
         if (!networkUp()) {
-            showSnackbar(String.format(getString(R.string.toast_stock_added_no_connectivity), symbol));
+            showToast(String.format(getString(R.string.toast_stock_added_no_connectivity), symbol));
             return;
         }
 
@@ -247,7 +247,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
 
         swipeRefreshLayout.setRefreshing(false);
         if (event.getCode() == ErrorEvent.NETWORK_ERROR) {
-            showSnackbar(getString(R.string.error_network));
+            showToast(getString(R.string.error_network));
 
         } else if (event.getCode() == ErrorEvent.SYMBOL_NOT_FOUND_ERROR) {
             String symbol = "Stock symbol";
@@ -260,19 +260,16 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                 PrefUtils.removeStock(getContext(), symbol);
             }
 
-            showSnackbar(String.format(getString(R.string.error_stock_symbol_not_found), symbol));
+            showToast(String.format(getString(R.string.error_stock_symbol_not_found), symbol));
         }
     }
 
-    private void showSnackbar(String message) {
-        Snackbar.make(
-                stockRecyclerView.getRootView(),
+    private void showToast(String message) {
+        Toast.makeText(
+                getContext(),
                 message,
-                Snackbar.LENGTH_LONG
-        ).setAction(getString(R.string.toast_action_ok), new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {}
-        }).show();
+                Toast.LENGTH_SHORT
+        ).show();
     }
 
     private final String[] QUOTE_PROJECTION = {
@@ -451,7 +448,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
                         DebugLog.logMessage("deleteStockQuoteSingleObserver - onError");
                         DebugLog.logMessage(e.getMessage());
                         e.printStackTrace();
-                        showSnackbar(String.format(getString(R.string.stock_quote_delete_unsuccessful), symbol));
+                        showToast(String.format(getString(R.string.stock_quote_delete_unsuccessful), symbol));
                     }
                 });
         disposables.add(disposableSingleObserver);
@@ -481,7 +478,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             }
         }
         updateRecyclerView();
-        showSnackbar(String.format(getString(R.string.stock_quote_delete_successful), symbol));
+        showToast(String.format(getString(R.string.stock_quote_delete_successful), symbol));
 
         updateAppWidget();
     }
