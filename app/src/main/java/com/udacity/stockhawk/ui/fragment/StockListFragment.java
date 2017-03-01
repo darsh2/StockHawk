@@ -91,6 +91,12 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
         View view = inflater.inflate(R.layout.fragment_stock_list, container, true);
         ButterKnife.bind(this, view);
 
+        /*
+        Has to be set every time in onCreate else on orientation change
+        menu icon disappears.
+         */
+        setHasOptionsMenu(true);
+
         toolbar.setTitle(getString(R.string.app_name));
         if (getActivity() instanceof StockListActivity) {
             ((StockListActivity) getActivity()).setSupportActionBar(toolbar);

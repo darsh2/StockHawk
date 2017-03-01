@@ -25,7 +25,6 @@ public class StockListActivity extends AppCompatActivity {
 
         if (stockListFragment == null) {
             stockListFragment = new StockListFragment();
-            stockListFragment.setHasOptionsMenu(true);
             getSupportFragmentManager()
                     .beginTransaction()
                     .add(R.id.container_stocks_list, stockListFragment, StockListFragment.TAG)
