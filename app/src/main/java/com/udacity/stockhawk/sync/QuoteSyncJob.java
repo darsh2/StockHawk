@@ -75,6 +75,7 @@ public final class QuoteSyncJob {
             DebugLog.logMessage(stockCopy.toString());
 
             if (stockArray.length == 0) {
+                EventBus.getDefault().post(new DataUpdatedEvent(System.currentTimeMillis(), isNewSymbolAdded));
                 return;
             }
 

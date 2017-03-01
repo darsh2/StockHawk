@@ -136,7 +136,7 @@ public class StockListFragment extends Fragment implements SwipeRefreshLayout.On
             swipeRefreshLayout.setRefreshing(false);
 
             stockQuotes = savedInstanceState.getParcelableArrayList(Constants.BUNDLE_STOCK_QUOTES);
-            adapter.updateStockQuotes(stockQuotes);
+            updateRecyclerView();
             return;
         }
 
